@@ -1,6 +1,7 @@
 import { h, render } from 'preact';
 import { App } from './ui/App';
 import { createLocalStorage, requestPersist } from './adapters/storage.local';
+import { registerServiceWorker } from './pwa/register';
 import './ui/styles.css';
 
 const storage = createLocalStorage();
@@ -21,5 +22,8 @@ const root = document.getElementById('app');
 if (root) {
   // Temiz başlangıç URL'si (D40: üst görünüm hash'i)
   if (!location.hash) history.replaceState(null, '', '#/workout');
-  render(h(App, { bootCount: boot.count, requestPersist }), root);
+  render(
+    h(App, { bootCount: boot.count, requestPersist, registerSW: registerServiceWorker }),
+    root,
+  );
 }

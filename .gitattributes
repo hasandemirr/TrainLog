@@ -1,0 +1,7 @@
+# Tüm metin dosyaları depoda LF; CI (ubuntu) ile Windows arasında satır sonu churn'ü engeller
+* text=auto eol=lf
+
+# İkili varlıklar
+*.png binary
+*.webp binary
+*.ico binary

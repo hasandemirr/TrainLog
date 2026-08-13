@@ -1,0 +1,33 @@
+# ── Bağımlılık / derleme ─────────────────────────────
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# ── Test çıktıları ───────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+
+# ── Ortam / sırlar (ileride bile olsa) ───────────────
+.env
+.env.*
+
+# ── GERÇEK KULLANICI VERİSİ — ASLA COMMIT EDİLMEZ ────
+# (D49 — repo public; gerçek antrenman/ölçüm verisi yalnızca yerelde yaşar)
+local-data/
+antrenman-*.json
+trainlog-*.json
+*.backup.json
+*.export.csv
+
+# ── Araç yerel ayarları ──────────────────────────────
+.claude/settings.local.json
+
+# ── OS / editör ──────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json

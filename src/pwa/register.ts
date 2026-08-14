@@ -8,10 +8,13 @@ export function registerServiceWorker(onUpdateReady: (apply: () => void) => void
   if (!('serviceWorker' in navigator)) return;
   if (!import.meta.env.PROD) return; // SW yalnızca üretim derlemesinde
 
-  // Kullanıcı "Yenile"ye basınca yeni SW kontrolü alır → tek sefer yenile
+  // Reload YALNIZCA kullanıcı "Yenile"ye basınca (açık uygula bayrağı). İlk-yük
+  // claim'i de controllerchange tetikler ama o reload edilmez — yoksa her ilk
+  // açılışta gereksiz bir reload olur.
+  let applying = false;
   let reloaded = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloaded) return;
+    if (!applying || reloaded) return;
     reloaded = true;
     window.location.reload();
   });
@@ -19,7 +22,10 @@ export function registerServiceWorker(onUpdateReady: (apply: () => void) => void
   void navigator.serviceWorker
     .register(import.meta.env.BASE_URL + 'sw.js', { scope: import.meta.env.BASE_URL })
     .then((reg) => {
-      const apply = () => reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
+      const apply = () => {
+        applying = true;
+        reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
+      };
 
       if (reg.waiting) onUpdateReady(apply);
 

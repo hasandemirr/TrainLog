@@ -3,7 +3,7 @@
 > **Statü:** Bu dosya projenin otoriter karar kaydıdır. Mimari tartışmalarda numarayla
 > referans verilir. **Claude Code bu dosyayı düzenlemez**; karar değişikliği önerisi
 > `docs/proposals/` altına yazılır, mimar + sahibin onayıyla buraya işlenir.
-> Son güncelleme: 2026-08-13.
+> Son güncelleme: 2026-08-14.
 
 ## A. Platform ve dağıtım
 
@@ -17,6 +17,7 @@
 5. Yerel-öncelikli: otorite cihazdadır; bulut hiçbir senaryoda kanonik değildir.
 6. Tek depo + tek yönlü akış: `yükle → göç → indeksle → çiz → aksiyon → kaydet → çiz`. Durum yönetimi kütüphanesi yok (~15 aksiyon; desen yeterli).
 7. Port/adaptör: `StoragePort`, `SyncPort`, `BackupPort`. Bağımlılık yönü: `domain` hiçbir şeyi import etmez; `app → domain`; `ui → app+domain`; adaptörler portları uygular; `main.ts` kablolar.
+D7 ek (S0 içtihadı): Port imzaları, portu ilk uygulayan sprintte tanımlanır (Sync → D11 tetiği geldiğinde, Backup → S3). Uygulanmamış port için imza uydurulmaz.
 8. Türetilmiş veri (indeksler, ipuçları, seans özetleri) asla kalıcılaştırılmaz. UI durumu (sekme, seçili gün) domain durumundan ayrıdır, yedek/birleştirme kapsamına girmez. Medya asla durum nesnesine girmez.
 
 ## C. Senkron
@@ -62,6 +63,7 @@
 35. Bütçeler: JS paketi gzip ≤ ~150 KB; durum nesnesi < 1 MB (tek-belge senkron tavanıyla hizalı).
 36. SW: derleme hash'li app-shell ön-önbelleği; elle sürüm artırma yok. SW sürümü ile şema sürümü bağımsızdır; önbellek temizliği veriye dokunmaz.
 37. Klasör yapısı: ARCHITECTURE.md'deki ağaç geçerlidir.
+D37 ek (S0 içtihadı): ARCHITECTURE §4 ağacı katmanlama için normatiftir, dosya envanteri için örnekleyicidir. Listeli dizinlere katman kurallarına uyan yeni dosya eklemek öneri gerektirmez; yeni üst-düzey dizin gerektirir.
 38. Arka plan yürütme yok (platform sınırı): sayaç ve tüm mantık yalnızca uygulama açıkken çalışır; 42-43 bu sınırın içinde tasarlanmıştır.
 
 ## H. Sonradan kilitlenenler

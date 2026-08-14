@@ -6,7 +6,9 @@ export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 30_000,
   fullyParallel: true,
-  use: { baseURL: 'http://localhost:4173' },
+  // SW bu duman testinin konusu değil (kabuk + yönlendirme); ilk-yük SW
+  // controllerchange→reload yarışını elemek için engelle. SW akışı KL-C'de.
+  use: { baseURL: 'http://localhost:4173', serviceWorkers: 'block' },
   webServer: {
     command: 'npm run build && npm run preview',
     url: 'http://localhost:4173/',

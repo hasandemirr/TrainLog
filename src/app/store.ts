@@ -1,23 +1,97 @@
-// app/store.ts — asgari yükleme (S1). Tam tek-yönlü akışlı store + aksiyonlar S2'de.
-// Kanonik anahtar yeniden kullanılır; doğrulamadan geçmeyen yük atılıp taze başlanır
-// (iskelet {count} böyle temizlenir). Göç YALNIZCA içe alma yolunda (D20) — burada değil.
+// app/store.ts — tek-yönlü akışlı store (D6): dispatch → saf reduce → SENKRON persist
+// (D24) → çiz. Ayrıca boş yükleme (S1) + tohum ekimi (D39).
 import type { StoragePort } from './ports';
-import type { AppState } from '../domain/types';
+import type { AppState, Exercise } from '../domain/types';
+import type { ExerciseId, ISODate, IdGen } from '../domain/ids';
+import { asRunId } from '../domain/ids';
 import { isAppState } from '../domain/validate';
 import { emptyState } from '../domain/state';
-import type { InitDeps } from '../domain/state';
+import type { SeedCatalog } from '../domain/migrate';
+import { reduce } from './actions';
+import type { Action } from './actions';
 
-export function loadOrInit(storage: StoragePort, deps: InitDeps): AppState {
+export interface StoreDeps {
+  now: number; // epoch ms — meta/kayıt updatedAt
+  today: ISODate; // yerel gün (D22) — koşu startDate, seans tarihi edge'de yakalanır
+  deviceId: string;
+  idgen: IdGen;
+}
+
+export interface Store {
+  getState(): AppState;
+  dispatch(action: Action): void;
+  subscribe(listener: () => void): () => void;
+}
+
+export function createStore(initial: AppState, storage: StoragePort): Store {
+  let state = initial;
+  const listeners = new Set<() => void>();
+  return {
+    getState: () => state,
+    dispatch(action) {
+      state = reduce(state, action); // saf geçiş
+      storage.save(JSON.stringify(state)); // D24: her aksiyonda SENKRON persist
+      listeners.forEach((l) => l()); // çiz
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+}
+
+/** Boş yük atılıp taze başlanır (S1); geçerli v2 aynen döner. Göç değil (D20). */
+export function loadOrInit(storage: StoragePort, deps: { now: number; deviceId: string }): AppState {
   const raw = storage.load();
   if (raw !== null) {
     try {
       const parsed: unknown = JSON.parse(raw);
       if (isAppState(parsed)) return parsed;
     } catch {
-      /* bozuk JSON → taze başla */
+      /* bozuk JSON → taze */
     }
   }
   const fresh = emptyState(deps);
-  storage.save(JSON.stringify(fresh)); // kanonik anahtarı geçerli v2 ile ez (iskelet temizliği)
+  storage.save(JSON.stringify(fresh)); // iskelet/bozuk anahtarı geçerli v2 ile ez
   return fresh;
+}
+
+/**
+ * Tohum ekimi (D39): yeni girdileri ekler; userModified olmayanları tohumla değiştirir
+ * (alan-düzeyi birleştirme yok); userModified'a dokunmaz. Koşu yoksa tohum programı için
+ * bir koşu açar (startDate = bugün, yerel).
+ */
+export function sow(state: AppState, seed: SeedCatalog, deps: { today: ISODate; idgen: IdGen }): AppState {
+  const exercises: Record<ExerciseId, Exercise> = { ...state.catalog.exercises };
+  for (const ex of Object.values(seed.exercises)) {
+    const cur = exercises[ex.id];
+    if (!cur || !cur.userModified) exercises[ex.id] = ex;
+  }
+
+  const programs = { ...state.catalog.programs };
+  const p = seed.program;
+  const curP = programs[p.id];
+  if (!curP || !curP.userModified) programs[p.id] = p;
+
+  let runs = state.runs;
+  const hasRun = Object.values(state.runs).some((r) => r.familyId === p.familyId);
+  if (!hasRun) {
+    const runId = asRunId(deps.idgen());
+    runs = {
+      ...state.runs,
+      [runId]: { id: runId, familyId: p.familyId, currentProgId: p.id, startDate: deps.today },
+    };
+  }
+
+  return { ...state, catalog: { exercises, programs }, runs };
+}
+
+/** Yükle → ek → kalıcılaştır. main.ts bunu çağırıp createStore'a verir. */
+export function initState(storage: StoragePort, seed: SeedCatalog, deps: StoreDeps): AppState {
+  const loaded = loadOrInit(storage, deps);
+  const sown = sow(loaded, seed, deps);
+  storage.save(JSON.stringify(sown)); // ekim de kalıcı
+  return sown;
 }

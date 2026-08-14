@@ -6,7 +6,18 @@
   --muted: #9aa4b2;
   --accent: #4f8cff;
   --ok: #34d399;
-  --tabbar-h: 56px;
+
+  /* Güvenli alan insetleri tek kaynakta tanımlanır; bileşenler YALNIZCA bu
+     değişkenleri tüketir. Önizlemede :root'a --sat/--sab basılarak (ör. 59/34)
+     düzen masaüstünde doğrulanabilir. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  --pad: 16px;
+  --tabbar-row: 52px; /* sabit dokunma satırı (etiket dikey ortalı) */
+  --tabbar-h: calc(var(--tabbar-row) + var(--sab)); /* satır + BİR kez alt inset */
 }
 
 * {
@@ -37,12 +48,12 @@ body {
   min-height: 100dvh;
 }
 
+/* Üst: pad + üst inset (saat/çentik çakışmasın). Alt: bar toplamı + pad
+   (bar zaten --sab içeriyor; inset burada TEKRAR eklenmez). */
 .content {
   flex: 1;
-  padding: 16px;
-  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);
-  padding-left: calc(16px + env(safe-area-inset-left));
-  padding-right: calc(16px + env(safe-area-inset-right));
+  padding: calc(var(--pad) + var(--sat)) calc(var(--pad) + var(--sar))
+    calc(var(--tabbar-h) + var(--pad)) calc(var(--pad) + var(--sal));
 }
 
 .view__title {
@@ -71,15 +82,16 @@ body {
   color: var(--ok);
 }
 
-/* Sabit alt bar — safe-area saygılı, dokunma hedefleri >= 44pt */
+/* Sabit alt bar: yükseklik = dokunma satırı + alt inset. Yatay iç dolgu >=12px
+   (+ yan insetler) — uç sekmeler köşe kavisine yaslanmaz. */
 .tabbar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   display: flex;
-  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
+  height: var(--tabbar-h);
+  padding: 0 calc(12px + var(--sar)) var(--sab) calc(12px + var(--sal));
   background: var(--surface);
   border-top: 1px solid var(--border);
 }
@@ -106,12 +118,12 @@ body {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  bottom: var(--tabbar-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));
+  padding: 12px calc(var(--pad) + var(--sar)) 12px calc(var(--pad) + var(--sal));
   background: var(--accent);
   color: #06122b;
   font-weight: 600;

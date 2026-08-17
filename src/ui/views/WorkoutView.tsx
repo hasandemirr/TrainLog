@@ -7,6 +7,7 @@ import type { Advice, HoldReason } from '../../domain/progression';
 import type { SessionId } from '../../domain/ids';
 import { NumInput } from '../components/NumInput';
 import { SubstituteSheet } from '../components/SubstituteSheet';
+import { WakeLockToggle } from '../components/WakeLockToggle';
 import { fmtNum } from '../format';
 
 interface Props {
@@ -95,6 +96,7 @@ export function WorkoutView({ state, today, dispatch }: Props) {
         {day.dayId} · {day.label} · Hafta {week}
         {selDayId === undefined ? ' (önerilen)' : ''}
       </p>
+      <WakeLockToggle />
 
       {model.cards.map((card) => (
         <ExerciseCardView key={card.slot} state={state} card={card} session={session} dispatch={dispatch} />

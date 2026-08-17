@@ -6,6 +6,7 @@ import type { Store } from '../app/store';
 import type { BackupServices } from '../app/backup';
 import { TabBar } from './components/TabBar';
 import { UpdateBar } from './components/UpdateBar';
+import { TimerBar } from './components/TimerBar';
 import { FirstRunBanner } from './components/FirstRunBanner';
 import { WorkoutView } from './views/WorkoutView';
 import { ProgressView } from './views/ProgressView';
@@ -49,6 +50,12 @@ export function App({ store, today, services, requestPersist, registerSW }: Prop
         {route === 'program' && <ProgramView />}
         {route === 'settings' && <SettingsView state={state} services={services} persist={persist} />}
       </main>
+      {state.timer && (
+        <TimerBar
+          timer={state.timer}
+          onClear={() => store.dispatch({ type: 'clearTimer', updatedAt: Date.now() })}
+        />
+      )}
       {apply && <UpdateBar onApply={apply} />}
       <TabBar active={route} onSelect={goTop} />
     </>

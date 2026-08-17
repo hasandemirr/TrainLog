@@ -6,8 +6,9 @@ import { migrateV1 } from '../domain/migrate';
 import type { SeedCatalog, V1Backup } from '../domain/migrate';
 import { isAppState } from '../domain/validate';
 import { merge } from '../domain/merge';
+import { closeStale } from '../domain/session';
 import type { AppState } from '../domain/types';
-import type { IdGen } from '../domain/ids';
+import type { IdGen, ISODate } from '../domain/ids';
 
 export type ImportResult = { ok: true; state: AppState } | { ok: false; error: string };
 
@@ -15,7 +16,7 @@ export function importBackup(
   current: AppState,
   rawJson: string,
   seed: SeedCatalog,
-  deps: { now: number; idgen: IdGen },
+  deps: { now: number; today: ISODate; idgen: IdGen },
 ): ImportResult {
   let parsed: unknown;
   try {
@@ -37,5 +38,8 @@ export function importBackup(
     return { ok: false, error: 'Tanınmayan yedek biçimi' };
   }
 
-  return { ok: true, state: merge(current, incoming) }; // D27: geri yükleme = birleştirme
+  // D27: geri yükleme = birleştirme. Ardından oto-kapanış (D46): yüklenen yedekteki
+  // geçmiş tarihli bitmemiş seanslar "bugünkü açık seans" gibi dirilmesin.
+  const merged = merge(current, incoming);
+  return { ok: true, state: closeStale(merged, deps.today, deps.now) };
 }

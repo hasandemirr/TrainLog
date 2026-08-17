@@ -145,3 +145,113 @@ body {
     transition: color 120ms ease;
   }
 }
+
+/* ── Kayıt döngüsü (S2) ─────────────────────────────── */
+.dayswitch {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.chip {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.chip--active {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.exercise__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.exercise__head strong {
+  font-size: 1.05rem;
+}
+
+.setrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.setrow__n {
+  width: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.num {
+  min-height: 44px;
+  width: 96px;
+  padding: 0 10px;
+  font-size: 1.15rem;
+  text-align: center;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.exercise__meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.note {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.link {
+  min-height: 44px;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.hint {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.hint--increase {
+  color: var(--ok);
+}
+
+.hint--hold {
+  color: #e0b341;
+}
+
+.warn {
+  margin: 4px 0 0;
+  color: #f2777a;
+  font-size: 0.9rem;
+}

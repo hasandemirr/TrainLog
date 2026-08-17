@@ -1,20 +1,31 @@
 import { h, render } from 'preact';
 import { App } from './ui/App';
 import { createLocalStorage, requestPersist } from './adapters/storage.local';
-import { loadOrInit } from './app/store';
+import { createStore, initState } from './app/store';
 import { registerServiceWorker } from './pwa/register';
+import { SEED } from './content/seed';
 import './ui/styles.css';
 
-const storage = createLocalStorage();
+/** Yerel gün (D22) — edge'de yakalanır, domain'e param olarak geçer. */
+function todayLocalISO(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 
-// Yükle → doğrula → geçersizse taze (S0 iskelet {count} anahtarı böyle temizlenir).
-// Zaman/kimlik burada (kablolama) üretilir; domain'e parametreyle geçer.
-const deviceId = globalThis.crypto?.randomUUID?.() ?? `dev-${Date.now()}`;
-const state = loadOrInit(storage, { now: Date.now(), deviceId });
+const storage = createLocalStorage();
+const now = Date.now();
+const today = todayLocalISO();
+const deviceId = globalThis.crypto?.randomUUID?.() ?? `dev-${now}`;
+let idc = 0;
+const idgen = () => globalThis.crypto?.randomUUID?.() ?? `id-${now}-${idc++}`;
+
+// Yükle → doğrula → ek (tohum) → kalıcılaştır; sonra tek-yönlü akışlı store.
+const state = initState(storage, SEED, { now, today, deviceId, idgen });
+const store = createStore(state, storage);
 
 const root = document.getElementById('app');
 if (root) {
-  // Temiz başlangıç URL'si (D40: üst görünüm hash'i)
   if (!location.hash) history.replaceState(null, '', '#/workout');
-  render(h(App, { state, requestPersist, registerSW: registerServiceWorker }), root);
+  render(h(App, { store, today, requestPersist, registerSW: registerServiceWorker }), root);
 }

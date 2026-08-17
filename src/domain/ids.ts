@@ -28,3 +28,30 @@ export function parseRecordKey(key: RecordKey): { sessionId: SessionId; slotIdx:
 
 /** Kimlik üreteci — enjekte edilir (domain crypto import etmez; test determinizmi). */
 export type IdGen = () => string;
+
+const TR: Record<string, string> = {
+  ı: 'i', İ: 'i', ş: 's', Ş: 's', ğ: 'g', Ğ: 'g', ç: 'c', Ç: 'c', ö: 'o', Ö: 'o', ü: 'u', Ü: 'u',
+};
+
+function slugify(name: string): string {
+  const t = Array.from(name)
+    .map((c) => TR[c] ?? c)
+    .join('')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return `ex_${t || 'x'}`;
+}
+
+/**
+ * Ad'dan kararlı slug kimlik üretir; çakışmaya karşı korunur (D14, D47): kullanıcı
+ * mevcut bir hareketle aynı adı verirse `ex_..._2`, `_3` … soneki eklenir.
+ */
+export function makeExerciseId(name: string, existing: Iterable<string>): ExerciseId {
+  const set = new Set(existing);
+  const base = slugify(name);
+  if (!set.has(base)) return base as ExerciseId;
+  let i = 2;
+  while (set.has(`${base}_${i}`)) i++;
+  return `${base}_${i}` as ExerciseId;
+}

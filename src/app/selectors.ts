@@ -127,6 +127,18 @@ export function sessionSummary(state: AppState, session: Session): SessionSummar
   return { session, dayLabel: day?.label ?? session.dayId, entries, totalVolume, totalSets };
 }
 
+/** İkame adayları (D47): arşivlenmemiş hareketler, ÖNCE aynı bölge, sonra ada göre. */
+export function substitutionOptions(state: AppState, currentExId: ExerciseId): Exercise[] {
+  const zone = state.catalog.exercises[currentExId]?.zone;
+  return Object.values(state.catalog.exercises)
+    .filter((e) => e.archived !== true && e.id !== currentExId)
+    .sort((a, b) => {
+      const az = a.zone === zone ? 0 : 1;
+      const bz = b.zone === zone ? 0 : 1;
+      return az - bz || a.name.localeCompare(b.name, 'tr');
+    });
+}
+
 export interface WorkoutModel {
   run: Run | null;
   program: Program | null;

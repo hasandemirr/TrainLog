@@ -3,7 +3,7 @@
 // (D17) — tarih at.session'da açılışta sabittir, reduce "şimdi" kullanmaz.
 import { recordKey } from '../domain/ids';
 import type { ExerciseId, RecordKey, SessionId } from '../domain/ids';
-import type { AppState, ExRecord, Session, SetEntry } from '../domain/types';
+import type { AppState, ExRecord, Exercise, Session, SetEntry } from '../domain/types';
 
 /** Bir kaydın yeri + tembel doğum için gereken bilgi. */
 export interface RecordAt {
@@ -25,7 +25,11 @@ export type Action =
   // Sayaç: mutlak tEnd (D42) AppState'te tutulur — D8 istisnası (yeniden kurulamayan
   // geçici gerçek; bellekten atılma sonrası ancak depodan döner).
   | { type: 'startTimer'; tEnd: number; label: string; updatedAt: number }
-  | { type: 'clearTimer'; updatedAt: number };
+  | { type: 'clearTimer'; updatedAt: number }
+  // İkame (D47): yalnızca o seanslık — kayıttaki exId değişir, program sürümüne
+  // DOKUNULMAZ. Yeni hareket kataloğa kullanıcı içeriği olarak girer (userModified).
+  | { type: 'substitute'; at: RecordAt; newExId: ExerciseId; updatedAt: number }
+  | { type: 'addExercise'; exercise: Exercise; updatedAt: number };
 
 const emptySet = (): SetEntry => ({ kg: null, reps: null });
 const emptySets = (n: number): SetEntry[] => Array.from({ length: n }, emptySet);
@@ -75,6 +79,17 @@ export function reduce(state: AppState, action: Action): AppState {
     return next;
   }
 
+  if (action.type === 'addExercise') {
+    return {
+      ...state,
+      catalog: {
+        ...state.catalog,
+        exercises: { ...state.catalog.exercises, [action.exercise.id]: action.exercise },
+      },
+      meta: { ...state.meta, updatedAt: action.updatedAt },
+    };
+  }
+
   const { at, updatedAt } = action;
   const key = recordKey(at.session.id, at.slot);
 
@@ -114,5 +129,8 @@ export function reduce(state: AppState, action: Action): AppState {
       return commit(rebuild(cur, updatedAt, { note: action.note.length > 0 ? action.note : null }));
     case 'takePrevious':
       return commit({ ...cur, sets: action.sets.map((s) => ({ ...s })), updatedAt });
+    case 'substitute':
+      // Yalnız bu slotta hareketi değiştir; taze kayıt (program sürümü değişmez, D47)
+      return commit({ exId: action.newExId, sets: emptySets(at.targetSets), updatedAt });
   }
 }

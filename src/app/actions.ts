@@ -14,7 +14,9 @@ export interface RecordAt {
 }
 
 export type Action =
-  | { type: 'setSet'; at: RecordAt; setIdx: number; entry: SetEntry; updatedAt: number }
+  // patch tek alan (kg VEYA reps) — reduce CANLI kayda uygular; aynı tuşta iki
+  // commit birbirini ezmez (dispatch senkron, ikinci canlı state'i görür).
+  | { type: 'setSet'; at: RecordAt; setIdx: number; patch: Partial<SetEntry>; updatedAt: number }
   | { type: 'addSet'; at: RecordAt; updatedAt: number }
   | { type: 'setRir'; at: RecordAt; rir: number | null; updatedAt: number }
   | { type: 'setNote'; at: RecordAt; note: string; updatedAt: number }
@@ -63,7 +65,7 @@ export function reduce(state: AppState, action: Action): AppState {
     case 'setSet': {
       const sets = cur.sets.slice();
       while (sets.length <= action.setIdx) sets.push(emptySet());
-      sets[action.setIdx] = action.entry;
+      sets[action.setIdx] = { ...(sets[action.setIdx] ?? emptySet()), ...action.patch };
       return commit({ ...cur, sets, updatedAt });
     }
     case 'addSet':

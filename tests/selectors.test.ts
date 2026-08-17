@@ -15,7 +15,7 @@ const seeded = () => sow(emptyState({ now: 0, deviceId: 'd' }), SEED, { today: '
 function logSets(state: ReturnType<typeof seeded>, at: RecordAt, entries: SetEntry[], updatedAt: number) {
   let s = state;
   entries.forEach((entry, setIdx) => {
-    s = reduce(s, { type: 'setSet', at, setIdx, entry, updatedAt });
+    s = reduce(s, { type: 'setSet', at, setIdx, patch: entry, updatedAt });
   });
   return s;
 }
@@ -39,9 +39,20 @@ describe('selectors', () => {
     const run = activeRun(s)!;
     const prog = s.catalog.programs[run.currentProgId]!;
     const session = resolveSession(s, run, prog, '2026-08-01', 'Gün 1', 1);
-    s = reduce(s, { type: 'setSet', at: { session, slot: 0, exId: rowId, targetSets: 3 }, setIdx: 0, entry: { kg: 60, reps: 8 }, updatedAt: 1 });
+    s = reduce(s, { type: 'setSet', at: { session, slot: 0, exId: rowId, targetSets: 3 }, setIdx: 0, patch: { kg: 60, reps: 8 }, updatedAt: 1 });
     expect(Object.keys(s.sessions)).toHaveLength(1);
     expect(workoutModel(s, { today: '2026-08-02' }).suggestion.dayId).toBe('Gün 2');
+  });
+
+  it('bugün açık seans varsa o güne devam eder (reload UX)', () => {
+    let s = seeded();
+    const run = activeRun(s)!;
+    const prog = s.catalog.programs[run.currentProgId]!;
+    const session = resolveSession(s, run, prog, '2026-08-01', 'Gün 1', 1);
+    s = reduce(s, { type: 'setSet', at: { session, slot: 0, exId: rowId, targetSets: 3 }, setIdx: 0, patch: { kg: 60, reps: 8 }, updatedAt: 1 });
+    const m = workoutModel(s, { today: '2026-08-01' }); // aynı gün tekrar açılış
+    expect(m.day?.dayId).toBe('Gün 1');
+    expect(m.cards[0]?.current?.sets[0]).toEqual({ kg: 60, reps: 8 });
   });
 
   it('lastRecordForExercise: önceki dolu kaydı bulur', () => {

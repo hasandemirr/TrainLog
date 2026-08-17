@@ -47,7 +47,7 @@ const key0 = recordKey(session.id, 0);
 
 describe('reduce — kayıt döngüsü', () => {
   it('setSet seansı + kaydı doğurur (D17)', () => {
-    const s = reduce(empty(), { type: 'setSet', at: at(0), setIdx: 0, entry: { kg: 60, reps: 8 }, updatedAt: 2000 });
+    const s = reduce(empty(), { type: 'setSet', at: at(0), setIdx: 0, patch: { kg: 60, reps: 8 }, updatedAt: 2000 });
     expect(s.sessions[session.id]).toEqual(session);
     expect(s.records[key0]).toEqual({
       exId: asExerciseId('ex_barbell_row'),
@@ -57,15 +57,21 @@ describe('reduce — kayıt döngüsü', () => {
     expect(s.meta.updatedAt).toBe(2000);
   });
 
+  it('aynı sete kg sonra reps patch → ikisi de durur (canlı state, ezme yok)', () => {
+    let s = reduce(empty(), { type: 'setSet', at: at(0), setIdx: 0, patch: { kg: 62.5 }, updatedAt: 1 });
+    s = reduce(s, { type: 'setSet', at: at(0), setIdx: 0, patch: { reps: 8 }, updatedAt: 2 });
+    expect(s.records[key0]?.sets[0]).toEqual({ kg: 62.5, reps: 8 });
+  });
+
   it('D17: tarih açılışta sabit — sonraki aksiyon seansı değiştirmez', () => {
-    let s = reduce(empty(), { type: 'setSet', at: at(0), setIdx: 0, entry: { kg: 60, reps: 8 }, updatedAt: 100 });
-    s = reduce(s, { type: 'setSet', at: at(0), setIdx: 1, entry: { kg: 60, reps: 7 }, updatedAt: 999999 });
+    let s = reduce(empty(), { type: 'setSet', at: at(0), setIdx: 0, patch: { kg: 60, reps: 8 }, updatedAt: 100 });
+    s = reduce(s, { type: 'setSet', at: at(0), setIdx: 1, patch: { kg: 60, reps: 7 }, updatedAt: 999999 });
     expect(Object.keys(s.sessions)).toHaveLength(1);
     expect(s.sessions[session.id]?.date).toBe('2026-08-01');
   });
 
   it('addSet boş set ekler', () => {
-    let s = reduce(empty(), { type: 'setSet', at: at(0), setIdx: 0, entry: { kg: 60, reps: 8 }, updatedAt: 1 });
+    let s = reduce(empty(), { type: 'setSet', at: at(0), setIdx: 0, patch: { kg: 60, reps: 8 }, updatedAt: 1 });
     s = reduce(s, { type: 'addSet', at: at(0), updatedAt: 2 });
     expect(s.records[key0]?.sets).toHaveLength(4);
   });
@@ -96,7 +102,7 @@ describe('store — D24 senkron persist', () => {
     const store = createStore(empty(), fs.port);
     const seen = vi.fn();
     store.subscribe(seen);
-    store.dispatch({ type: 'setSet', at: at(0), setIdx: 0, entry: { kg: 60, reps: 8 }, updatedAt: 5 });
+    store.dispatch({ type: 'setSet', at: at(0), setIdx: 0, patch: { kg: 60, reps: 8 }, updatedAt: 5 });
     expect(fs.raw).not.toBeNull();
     expect(JSON.parse(fs.raw as string).records[key0].sets[0]).toEqual({ kg: 60, reps: 8 });
     expect(seen).toHaveBeenCalledTimes(1);

@@ -123,7 +123,13 @@ export function workoutModel(
   const program = programOf(state, run);
   if (!program) return { ...EMPTY, run };
 
-  const suggestion = suggestNextDay(program, runSessions(state, run));
+  // Varsayılan gün: bugün açık (bitmemiş) bir seans varsa ONA devam et (reload'da
+  // kaybolmasın); yoksa döngü önerisi (D44: son TAMAMLANAN günün bir sonrası).
+  // Tamamlama/oto-kapanış S3 (D46); S2'de finishedAt hep boş → aynı gün devam eder.
+  const sessions = runSessions(state, run);
+  const todaySession = sessions.find((s) => s.date === ui.today && s.finishedAt === undefined);
+  const next = suggestNextDay(program, sessions);
+  const suggestion = todaySession ? { dayId: todaySession.dayId, week: todaySession.week } : { dayId: next.dayId, week: next.week };
   const dayId = ui.selDayId ?? suggestion.dayId;
   const week = ui.selWeek ?? suggestion.week;
   const day = program.days.find((d) => d.dayId === dayId) ?? null;

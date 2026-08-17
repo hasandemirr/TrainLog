@@ -255,3 +255,30 @@ body {
   color: #f2777a;
   font-size: 0.9rem;
 }
+
+.btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.firstrun {
+  border-color: var(--accent);
+}
+
+.import {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.import textarea {
+  width: 100%;
+  margin-top: 6px;
+}

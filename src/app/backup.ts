@@ -12,6 +12,19 @@ import type { IdGen, ISODate } from '../domain/ids';
 
 export type ImportResult = { ok: true; state: AppState } | { ok: false; error: string };
 
+export type ExportOutcome = 'shared' | 'downloaded' | 'copy';
+export interface ExportResult {
+  outcome: ExportOutcome;
+  promise?: Promise<void>;
+  text: string;
+}
+
+/** main.ts'in kabloladığı yedek yetenekleri; ui yalnızca bunları tüketir. */
+export interface BackupServices {
+  exportNow: () => ExportResult; // JEST-SENKRON (şart 1) — onClick'ten çağrılır
+  restore: (text: string) => ImportResult; // içe al + store.replace
+}
+
 /** Yedeğe yazılacak durum — sayaç SOYULUR (D42 istisnası: yarım sayaç yedekte
  *  işi yok). Dışa aktarma bunu serileştirir. */
 export function toBackupState(state: AppState): AppState {

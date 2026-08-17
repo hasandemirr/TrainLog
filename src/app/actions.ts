@@ -29,7 +29,8 @@ export type Action =
   // İkame (D47): yalnızca o seanslık — kayıttaki exId değişir, program sürümüne
   // DOKUNULMAZ. Yeni hareket kataloğa kullanıcı içeriği olarak girer (userModified).
   | { type: 'substitute'; at: RecordAt; newExId: ExerciseId; updatedAt: number }
-  | { type: 'addExercise'; exercise: Exercise; updatedAt: number };
+  | { type: 'addExercise'; exercise: Exercise; updatedAt: number }
+  | { type: 'markBackup'; at: number }; // yedek alındı → meta.lastBackup (D29)
 
 const emptySet = (): SetEntry => ({ kg: null, reps: null });
 const emptySets = (n: number): SetEntry[] => Array.from({ length: n }, emptySet);
@@ -77,6 +78,10 @@ export function reduce(state: AppState, action: Action): AppState {
     const next: AppState = { ...state, meta: { ...state.meta, updatedAt: action.updatedAt } };
     delete next.timer;
     return next;
+  }
+
+  if (action.type === 'markBackup') {
+    return { ...state, meta: { ...state.meta, lastBackup: action.at, updatedAt: action.at } };
   }
 
   if (action.type === 'addExercise') {

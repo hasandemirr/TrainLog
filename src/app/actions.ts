@@ -2,7 +2,7 @@
 // (edge'de yakalanır); reduce saftır. Kayıtlar tembel doğar; seans ilk kayıtla doğar
 // (D17) — tarih at.session'da açılışta sabittir, reduce "şimdi" kullanmaz.
 import { recordKey } from '../domain/ids';
-import type { ExerciseId, RecordKey } from '../domain/ids';
+import type { ExerciseId, RecordKey, SessionId } from '../domain/ids';
 import type { AppState, ExRecord, Session, SetEntry } from '../domain/types';
 
 /** Bir kaydın yeri + tembel doğum için gereken bilgi. */
@@ -20,7 +20,8 @@ export type Action =
   | { type: 'addSet'; at: RecordAt; updatedAt: number }
   | { type: 'setRir'; at: RecordAt; rir: number | null; updatedAt: number }
   | { type: 'setNote'; at: RecordAt; note: string; updatedAt: number }
-  | { type: 'takePrevious'; at: RecordAt; sets: SetEntry[]; updatedAt: number };
+  | { type: 'takePrevious'; at: RecordAt; sets: SetEntry[]; updatedAt: number }
+  | { type: 'finish'; sessionId: SessionId; finishedAt: number };
 
 const emptySet = (): SetEntry => ({ kg: null, reps: null });
 const emptySets = (n: number): SetEntry[] => Array.from({ length: n }, emptySet);
@@ -45,13 +46,31 @@ function rebuild(cur: ExRecord, updatedAt: number, ch: { rir?: number | null; no
 }
 
 export function reduce(state: AppState, action: Action): AppState {
+  if (action.type === 'finish') {
+    const s = state.sessions[action.sessionId];
+    if (!s) return state;
+    return {
+      ...state,
+      sessions: { ...state.sessions, [action.sessionId]: { ...s, finishedAt: action.finishedAt } },
+      meta: { ...state.meta, updatedAt: action.finishedAt },
+    };
+  }
+
   const { at, updatedAt } = action;
   const key = recordKey(at.session.id, at.slot);
 
-  // Seans doğumu: hedef yoksa ekle (ilk kayıtla doğar, D17). Tarih at.session'da sabit.
-  const sessions = state.sessions[at.session.id]
-    ? state.sessions
-    : { ...state.sessions, [at.session.id]: at.session };
+  // Seans doğumu (D17): hedef yoksa ekle. Yeni seans açılınca aynı koşunun diğer
+  // bitmemiş seansları otomatik kapanır (D46: "yeni seans açıldığında").
+  let sessions = state.sessions;
+  if (!state.sessions[at.session.id]) {
+    sessions = { ...state.sessions };
+    for (const s of Object.values(sessions)) {
+      if (s.runId === at.session.runId && s.finishedAt === undefined) {
+        sessions[s.id] = { ...s, finishedAt: updatedAt };
+      }
+    }
+    sessions[at.session.id] = at.session;
+  }
 
   const cur = ensureRecord(state.records, key, at, updatedAt);
   const commit = (rec: ExRecord): AppState => ({

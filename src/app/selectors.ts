@@ -1,7 +1,7 @@
 // app/selectors.ts — türetilmiş bellek indeksleri (D8). ASLA kalıcılaşmaz.
 // Seçili gün/hafta UI durumudur, parametreyle gelir; AppState'e girmez.
 import { compareSessions, createSession, nextSeq, suggestNextDay } from '../domain/session';
-import { isDrop, progressionHint } from '../domain/progression';
+import { isDrop, progressionHint, setVolume } from '../domain/progression';
 import type { Advice } from '../domain/progression';
 import { parseRecordKey, recordKey } from '../domain/ids';
 import type { ExerciseId, ISODate, RecordKey, SessionId } from '../domain/ids';
@@ -91,6 +91,40 @@ export function resolveSession(
   );
   if (existing) return existing;
   return createSession({ date, seq: nextSeq(state.sessions, date), runId: run.id, progId: program.id, dayId, week });
+}
+
+export interface SessionSummary {
+  session: Session;
+  dayLabel: string;
+  entries: { exercise: Exercise; record: ExRecord; volume: number; filledSets: number }[];
+  totalVolume: number;
+  totalSets: number;
+}
+
+/** Seans özeti — TÜRETİLMİŞ görünüm (D8, D46), asla saklanmaz. */
+export function sessionSummary(state: AppState, session: Session): SessionSummary {
+  const program = state.catalog.programs[session.progId];
+  const day = program?.days.find((d) => d.dayId === session.dayId);
+
+  const rows = (Object.entries(state.records) as [RecordKey, ExRecord][])
+    .filter(([k]) => parseRecordKey(k).sessionId === session.id)
+    .sort((a, b) => parseRecordKey(a[0]).slotIdx - parseRecordKey(b[0]).slotIdx);
+
+  const entries: SessionSummary['entries'] = [];
+  let totalVolume = 0;
+  let totalSets = 0;
+  for (const [, rec] of rows) {
+    const filledSets = rec.sets.filter((s) => s.reps !== null).length;
+    if (filledSets === 0) continue; // boş kaydı atla
+    const exercise = state.catalog.exercises[rec.exId];
+    if (!exercise) continue;
+    const volume = setVolume(rec.sets);
+    entries.push({ exercise, record: rec, volume, filledSets });
+    totalVolume += volume;
+    totalSets += filledSets;
+  }
+
+  return { session, dayLabel: day?.label ?? session.dayId, entries, totalVolume, totalSets };
 }
 
 export interface WorkoutModel {

@@ -1,13 +1,27 @@
 // domain/session.ts — seans doğumu (D17) + döngü önerisi (D44). Saf; import yok.
 import { parseSessionId, sessionId } from './ids';
 import type { ISODate, ProgramId, RunId, SessionId } from './ids';
-import type { Program, Session } from './types';
+import type { AppState, Program, Session } from './types';
 
 /** Seans sıralaması: tarihe, sonra gün-içi sıraya göre. Tek kaynak. */
 export function compareSessions(a: SessionId, b: SessionId): number {
   const pa = parseSessionId(a);
   const pb = parseSessionId(b);
   return pa.date < pb.date ? -1 : pa.date > pb.date ? 1 : pa.seq - pb.seq;
+}
+
+/** Uygulama ileri bir tarihte açılınca geçmiş (date < today) bitmemiş seansları
+ *  otomatik kapat (D46). Değişiklik yoksa aynı durumu döner. */
+export function closeStale(state: AppState, today: ISODate, now: number): AppState {
+  let changed = false;
+  const sessions: Record<SessionId, Session> = { ...state.sessions };
+  for (const s of Object.values(state.sessions)) {
+    if (s.finishedAt === undefined && s.date < today) {
+      sessions[s.id] = { ...s, finishedAt: now };
+      changed = true;
+    }
+  }
+  return changed ? { ...state, sessions } : state;
 }
 
 /** Bir tarih için sonraki gün-içi sıra: #1 varsayılan, aynı güne telafi #2 … (D17). */

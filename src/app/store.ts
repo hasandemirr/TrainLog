@@ -6,6 +6,7 @@ import type { ExerciseId, ISODate, IdGen } from '../domain/ids';
 import { asRunId } from '../domain/ids';
 import { isAppState } from '../domain/validate';
 import { emptyState } from '../domain/state';
+import { closeStale } from '../domain/session';
 import type { SeedCatalog } from '../domain/migrate';
 import { reduce } from './actions';
 import type { Action } from './actions';
@@ -99,6 +100,7 @@ export function sow(state: AppState, seed: SeedCatalog, deps: { today: ISODate; 
 export function initState(storage: StoragePort, seed: SeedCatalog, deps: StoreDeps): AppState {
   const loaded = loadOrInit(storage, deps);
   const sown = sow(loaded, seed, deps);
-  storage.save(JSON.stringify(sown)); // ekim de kalıcı
-  return sown;
+  const closed = closeStale(sown, deps.today, deps.now); // D46: ileri tarihte açılış
+  storage.save(JSON.stringify(closed)); // ekim + oto-kapanış kalıcı
+  return closed;
 }

@@ -12,6 +12,15 @@ import type { IdGen, ISODate } from '../domain/ids';
 
 export type ImportResult = { ok: true; state: AppState } | { ok: false; error: string };
 
+/** Yedeğe yazılacak durum — sayaç SOYULUR (D42 istisnası: yarım sayaç yedekte
+ *  işi yok). Dışa aktarma bunu serileştirir. */
+export function toBackupState(state: AppState): AppState {
+  if (state.timer === undefined) return state;
+  const out: AppState = { ...state };
+  delete out.timer;
+  return out;
+}
+
 export function importBackup(
   current: AppState,
   rawJson: string,

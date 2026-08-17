@@ -21,7 +21,11 @@ export type Action =
   | { type: 'setRir'; at: RecordAt; rir: number | null; updatedAt: number }
   | { type: 'setNote'; at: RecordAt; note: string; updatedAt: number }
   | { type: 'takePrevious'; at: RecordAt; sets: SetEntry[]; updatedAt: number }
-  | { type: 'finish'; sessionId: SessionId; finishedAt: number };
+  | { type: 'finish'; sessionId: SessionId; finishedAt: number }
+  // Sayaç: mutlak tEnd (D42) AppState'te tutulur — D8 istisnası (yeniden kurulamayan
+  // geçici gerçek; bellekten atılma sonrası ancak depodan döner).
+  | { type: 'startTimer'; tEnd: number; label: string; updatedAt: number }
+  | { type: 'clearTimer'; updatedAt: number };
 
 const emptySet = (): SetEntry => ({ kg: null, reps: null });
 const emptySets = (n: number): SetEntry[] => Array.from({ length: n }, emptySet);
@@ -54,6 +58,21 @@ export function reduce(state: AppState, action: Action): AppState {
       sessions: { ...state.sessions, [action.sessionId]: { ...s, finishedAt: action.finishedAt } },
       meta: { ...state.meta, updatedAt: action.finishedAt },
     };
+  }
+
+  if (action.type === 'startTimer') {
+    return {
+      ...state,
+      timer: { tEnd: action.tEnd, label: action.label },
+      meta: { ...state.meta, updatedAt: action.updatedAt },
+    };
+  }
+
+  if (action.type === 'clearTimer') {
+    if (state.timer === undefined) return state;
+    const next: AppState = { ...state, meta: { ...state.meta, updatedAt: action.updatedAt } };
+    delete next.timer;
+    return next;
   }
 
   const { at, updatedAt } = action;

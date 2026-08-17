@@ -20,6 +20,8 @@ export interface StoreDeps {
 export interface Store {
   getState(): AppState;
   dispatch(action: Action): void;
+  /** Tüm durumu değiştir (yedek geri yükleme, "tümünü sil") — persist + çiz. */
+  replace(next: AppState): void;
   subscribe(listener: () => void): () => void;
 }
 
@@ -31,6 +33,11 @@ export function createStore(initial: AppState, storage: StoragePort): Store {
     dispatch(action) {
       state = reduce(state, action); // saf geçiş
       storage.save(JSON.stringify(state)); // D24: her aksiyonda SENKRON persist
+      listeners.forEach((l) => l()); // çiz
+    },
+    replace(next) {
+      state = next;
+      storage.save(JSON.stringify(state)); // senkron persist
       listeners.forEach((l) => l()); // çiz
     },
     subscribe(listener) {

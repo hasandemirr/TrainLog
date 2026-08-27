@@ -10,7 +10,32 @@ import { closeStale } from '../domain/session';
 import type { AppState } from '../domain/types';
 import type { IdGen, ISODate } from '../domain/ids';
 
-export type ImportResult = { ok: true; state: AppState } | { ok: false; error: string };
+export interface MergeStats {
+  recordsAdded: number;
+  recordsUpdated: number;
+  recordsUnchanged: number;
+  measuresAdded: number;
+  measuresUpdated: number;
+  measuresUnchanged: number;
+}
+
+export type ImportResult = { ok: true; state: AppState; stats: MergeStats } | { ok: false; error: string };
+
+function countDiff<T>(
+  current: Record<string, T>,
+  incoming: Record<string, T>,
+  merged: Record<string, T>,
+): { added: number; updated: number; unchanged: number } {
+  let added = 0;
+  let updated = 0;
+  let unchanged = 0;
+  for (const k of Object.keys(incoming)) {
+    if (!(k in current)) added += 1;
+    else if (JSON.stringify(merged[k]) !== JSON.stringify(current[k])) updated += 1;
+    else unchanged += 1;
+  }
+  return { added, updated, unchanged };
+}
 
 export type ExportOutcome = 'shared' | 'downloaded' | 'copy';
 export interface ExportResult {
@@ -63,5 +88,15 @@ export function importBackup(
   // D27: geri yükleme = birleştirme. Ardından oto-kapanış (D46): yüklenen yedekteki
   // geçmiş tarihli bitmemiş seanslar "bugünkü açık seans" gibi dirilmesin.
   const merged = merge(current, incoming);
-  return { ok: true, state: closeStale(merged, deps.today, deps.now) };
+  const rec = countDiff(current.records, incoming.records, merged.records);
+  const mea = countDiff(current.measures, incoming.measures, merged.measures);
+  const stats: MergeStats = {
+    recordsAdded: rec.added,
+    recordsUpdated: rec.updated,
+    recordsUnchanged: rec.unchanged,
+    measuresAdded: mea.added,
+    measuresUpdated: mea.updated,
+    measuresUnchanged: mea.unchanged,
+  };
+  return { ok: true, state: closeStale(merged, deps.today, deps.now), stats };
 }

@@ -8,7 +8,21 @@ export function BackupImport({ services }: { services: BackupServices }) {
   const restore = (text: string) => {
     if (!text.trim()) return;
     const res = services.restore(text);
-    setMsg(res.ok ? 'Yedek yüklendi (birleştirildi).' : `Hata: ${res.error}`);
+    if (!res.ok) {
+      setMsg(`Hata: ${res.error}`);
+      return;
+    }
+    const s = res.stats;
+    const changes = s.recordsAdded + s.recordsUpdated + s.measuresAdded + s.measuresUpdated;
+    if (changes === 0) {
+      setMsg('Yedek mevcut veriyle aynıydı.');
+      return;
+    }
+    const parts: string[] = [];
+    if (s.recordsAdded > 0) parts.push(`${s.recordsAdded} yeni kayıt`);
+    if (s.recordsUpdated > 0) parts.push(`${s.recordsUpdated} güncelleme`);
+    if (s.measuresAdded + s.measuresUpdated > 0) parts.push(`${s.measuresAdded + s.measuresUpdated} ölçüm`);
+    setMsg(`İçe alındı: ${parts.join(', ')}`);
   };
 
   const onFile = (e: Event) => {

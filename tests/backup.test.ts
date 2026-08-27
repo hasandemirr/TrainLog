@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { importBackup } from '../src/app/backup';
+import { importBackup, toBackupState } from '../src/app/backup';
 import { sow } from '../src/app/store';
+import { reduce } from '../src/app/actions';
+import { createSession } from '../src/domain/session';
 import { workoutModel } from '../src/app/selectors';
 import { emptyState } from '../src/domain/state';
 import { asExerciseId } from '../src/domain/ids';
@@ -62,6 +64,29 @@ describe('importBackup — geri yükleme = merge (D27); tohum tek kaynak', () =>
   it('v2 yedeği doğrulanır + merge', () => {
     const res = importBackup(emptyState({ now: 0, deviceId: 'a' }), JSON.stringify(seeded()), SEED, { now: 1, today: '2026-08-01', idgen: mkIdgen() });
     expect(res.ok).toBe(true);
+  });
+
+  it('merge istatistiği (focus 6): yeni kayıt=added; aynı yedek=değişiklik yok', () => {
+    const base = seeded();
+    const run = Object.values(base.runs)[0]!;
+    const prog = base.catalog.programs[run.currentProgId]!;
+    const sess = createSession({ date: '2026-07-20', seq: 1, runId: run.id, progId: prog.id, dayId: 'Gün 1', week: 1 });
+    const withRec = reduce(base, {
+      type: 'setSet',
+      at: { session: sess, slot: 0, exId: asExerciseId('ex_barbell_row'), targetSets: 3 },
+      setIdx: 0,
+      patch: { kg: 60, reps: 8 },
+      updatedAt: 1,
+    });
+    const backupJson = JSON.stringify(toBackupState(withRec));
+
+    const r1 = importBackup(seeded(), backupJson, SEED, { now: 9999, today: '2026-08-01', idgen: mkIdgen() });
+    if (!r1.ok) throw new Error('r1');
+    expect(r1.stats.recordsAdded).toBe(1);
+
+    const r2 = importBackup(withRec, backupJson, SEED, { now: 9999, today: '2026-08-01', idgen: mkIdgen() });
+    if (!r2.ok) throw new Error('r2');
+    expect(r2.stats).toMatchObject({ recordsAdded: 0, recordsUpdated: 0 });
   });
 
   it('bozuk JSON / tanınmayan biçim → hata', () => {

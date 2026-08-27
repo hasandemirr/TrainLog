@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import type { AppState, ExRecord, Session, SetEntry } from '../../domain/types';
+import type { AppState, Session, SetEntry } from '../../domain/types';
 import { sessionSummary, workoutModel } from '../../app/selectors';
 import type { ExerciseCard } from '../../app/selectors';
 import type { Action } from '../../app/actions';
@@ -8,7 +8,8 @@ import type { SessionId } from '../../domain/ids';
 import { NumInput } from '../components/NumInput';
 import { SubstituteSheet } from '../components/SubstituteSheet';
 import { WakeLockToggle } from '../components/WakeLockToggle';
-import { fmtNum } from '../format';
+import { SummaryCard } from '../components/SummaryCard';
+import { fmtNum, setsSummary } from '../format';
 
 interface Props {
   state: AppState;
@@ -28,13 +29,6 @@ function hintText(a: Advice): string {
   return HOLD_TEXT[a.reason];
 }
 
-function summarize(rec: ExRecord): string {
-  const parts = rec.sets
-    .filter((s) => s.reps !== null)
-    .map((s) => (s.kg !== null ? `${fmtNum(s.kg)}×${s.reps}` : `${s.reps} sn`));
-  return parts.length > 0 ? parts.join(', ') : '—';
-}
-
 export function WorkoutView({ state, today, dispatch }: Props) {
   const [selDayId, setSelDayId] = useState<string | undefined>(undefined);
   const [summaryId, setSummaryId] = useState<SessionId | null>(null);
@@ -46,16 +40,7 @@ export function WorkoutView({ state, today, dispatch }: Props) {
     return (
       <section class="view">
         <h1 class="view__title">Seans özeti</h1>
-        <div class="card">
-          <p class="view__hint">
-            {sum.dayLabel} · {sum.totalSets} set · toplam hacim {fmtNum(sum.totalVolume)}
-          </p>
-          {sum.entries.map((e) => (
-            <p key={e.exercise.id}>
-              <strong>{e.exercise.name}</strong> — {summarize(e.record)}
-            </p>
-          ))}
-        </div>
+        <SummaryCard summary={sum} />
         <button type="button" class="btn" onClick={() => setSummaryId(null)}>
           Tamam
         </button>
@@ -153,7 +138,7 @@ function ExerciseCardView({
 
       {last ? (
         <p class="status">
-          Geçen: {summarize(last.record)}{' '}
+          Geçen: {setsSummary(last.record.sets)}{' '}
           <button type="button" class="link" onClick={() => dispatch({ type: 'takePrevious', at, sets: last.record.sets, updatedAt: Date.now() })}>
             geçeni al
           </button>

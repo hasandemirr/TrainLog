@@ -46,7 +46,7 @@ export function App({ store, today, services, requestPersist, registerSW }: Prop
       <main class="content">
         {route === 'workout' && isFresh && <FirstRunBanner services={services} />}
         {route === 'workout' && <WorkoutView state={state} today={today} dispatch={store.dispatch} />}
-        {route === 'progress' && <ProgressView />}
+        {route === 'progress' && <ProgressView state={state} today={today} dispatch={store.dispatch} />}
         {route === 'program' && <ProgramView />}
         {route === 'settings' && <SettingsView state={state} services={services} persist={persist} />}
       </main>

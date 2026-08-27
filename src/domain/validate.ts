@@ -76,9 +76,10 @@ function isProgram(x: unknown): x is Program {
 }
 
 function isRun(x: unknown): x is Run {
-  return (
-    isObj(x) && isStr(x.id) && isStr(x.familyId) && isStr(x.currentProgId) && isStr(x.startDate)
-  );
+  if (!isObj(x)) return false;
+  if (!isStr(x.id) || !isStr(x.familyId) || !isStr(x.currentProgId) || !isStr(x.startDate)) return false;
+  if (x.endedAt !== undefined && !isStr(x.endedAt)) return false; // salt-eklemeli; eski veri geçerli kalır
+  return true;
 }
 
 function isSession(x: unknown): x is Session {

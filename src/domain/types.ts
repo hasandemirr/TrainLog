@@ -44,6 +44,7 @@ export interface Run {
   familyId: string;
   currentProgId: ProgramId;
   startDate: ISODate;
+  endedAt?: ISODate; // yoksa AKTİF koşu (en fazla bir tane). Salt-eklemeli → v:2 kalır.
 }
 
 export interface Session {

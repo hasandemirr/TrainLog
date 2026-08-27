@@ -20,11 +20,14 @@ function hasData(rec: ExRecord): boolean {
   return rec.sets.some((s) => s.kg !== null || s.reps !== null);
 }
 
-/** S2: tek koşu — en geç başlayanı aktif say. */
+/** Aktif koşu: endedAt'sız olan (en fazla bir tane, S5 değişmezi). Yoksa en geç
+ *  başlayan (geçmiş görüntüleme için). */
 export function activeRun(state: AppState): Run | null {
   const runs = Object.values(state.runs);
   if (runs.length === 0) return null;
-  return runs.reduce((a, b) => (a.startDate >= b.startDate ? a : b));
+  const active = runs.filter((r) => r.endedAt === undefined);
+  const pool = active.length > 0 ? active : runs;
+  return pool.reduce((a, b) => (a.startDate >= b.startDate ? a : b));
 }
 
 export function programOf(state: AppState, run: Run): Program | null {

@@ -2,8 +2,9 @@
 // (edge'de yakalanır); reduce saftır. Kayıtlar tembel doğar; seans ilk kayıtla doğar
 // (D17) — tarih at.session'da açılışta sabittir, reduce "şimdi" kullanmaz.
 import { recordKey } from '../domain/ids';
-import type { ExerciseId, ISODate, RecordKey, SessionId } from '../domain/ids';
-import type { AppState, ExRecord, Exercise, Session, SetEntry } from '../domain/types';
+import type { ExerciseId, ISODate, RecordKey, RunId, SessionId } from '../domain/ids';
+import { openRun } from '../domain/program';
+import type { AppState, ExRecord, Exercise, Program, Run, Session, SetEntry } from '../domain/types';
 
 /** Bir kaydın yeri + tembel doğum için gereken bilgi. */
 export interface RecordAt {
@@ -32,7 +33,11 @@ export type Action =
   | { type: 'addExercise'; exercise: Exercise; updatedAt: number }
   | { type: 'markBackup'; at: number } // yedek alındı → meta.lastBackup (D29)
   // Ölçüm (F2.4): measures tarih anahtarlı; aynı tarihe alan yazımı son-yazan-kazanır.
-  | { type: 'setMeasure'; date: ISODate; field: string; value: number | string | null; updatedAt: number };
+  | { type: 'setMeasure'; date: ISODate; field: string; value: number | string | null; updatedAt: number }
+  // Program yönetimi (F3, S5)
+  | { type: 'startRun'; program?: Program; run: Run; today: ISODate; updatedAt: number } // yeni koşu (mevcutu kapatır)
+  | { type: 'saveProgramVersion'; program: Program; runId: RunId; updatedAt: number } // düzenleme = yeni sürüm + işaretçi (D15)
+  | { type: 'archiveExercise'; exId: ExerciseId; updatedAt: number }; // silme yok; arşivle
 
 const emptySet = (): SetEntry => ({ kg: null, reps: null });
 const emptySets = (n: number): SetEntry[] => Array.from({ length: n }, emptySet);
@@ -94,6 +99,41 @@ export function reduce(state: AppState, action: Action): AppState {
     if (Object.keys(row).length === 0) delete measures[action.date];
     else measures[action.date] = row;
     return { ...state, measures, meta: { ...state.meta, updatedAt: action.updatedAt } };
+  }
+
+  if (action.type === 'startRun') {
+    let s = state;
+    if (action.program) {
+      s = { ...s, catalog: { ...s.catalog, programs: { ...s.catalog.programs, [action.program.id]: action.program } } };
+    }
+    const opened = openRun(s, action.run, action.today); // mevcut aktif koşuyu kapatır
+    return { ...opened, meta: { ...opened.meta, updatedAt: action.updatedAt } };
+  }
+
+  if (action.type === 'saveProgramVersion') {
+    const run = state.runs[action.runId];
+    const runs = run
+      ? { ...state.runs, [action.runId]: { ...run, currentProgId: action.program.id } }
+      : state.runs;
+    return {
+      ...state,
+      catalog: { ...state.catalog, programs: { ...state.catalog.programs, [action.program.id]: action.program } },
+      runs,
+      meta: { ...state.meta, updatedAt: action.updatedAt },
+    };
+  }
+
+  if (action.type === 'archiveExercise') {
+    const ex = state.catalog.exercises[action.exId];
+    if (ex === undefined) return state;
+    return {
+      ...state,
+      catalog: {
+        ...state.catalog,
+        exercises: { ...state.catalog.exercises, [action.exId]: { ...ex, archived: true, userModified: true } },
+      },
+      meta: { ...state.meta, updatedAt: action.updatedAt },
+    };
   }
 
   if (action.type === 'addExercise') {

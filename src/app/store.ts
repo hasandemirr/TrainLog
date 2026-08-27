@@ -7,6 +7,7 @@ import { asRunId } from '../domain/ids';
 import { isAppState } from '../domain/validate';
 import { emptyState } from '../domain/state';
 import { closeStale } from '../domain/session';
+import { openRun } from '../domain/program';
 import type { SeedCatalog } from '../domain/migrate';
 import { reduce } from './actions';
 import type { Action } from './actions';
@@ -83,17 +84,14 @@ export function sow(state: AppState, seed: SeedCatalog, deps: { today: ISODate; 
   const curP = programs[p.id];
   if (!curP || !curP.userModified) programs[p.id] = p;
 
-  let runs = state.runs;
-  const hasRun = Object.values(state.runs).some((r) => r.familyId === p.familyId);
-  if (!hasRun) {
-    const runId = asRunId(deps.idgen());
-    runs = {
-      ...state.runs,
-      [runId]: { id: runId, familyId: p.familyId, currentProgId: p.id, startDate: deps.today },
-    };
-  }
+  const withCatalog: AppState = { ...state, catalog: { exercises, programs } };
 
-  return { ...state, catalog: { exercises, programs }, runs };
+  // Koşu yoksa tohum programı için AÇ — startRun ile AYNI genel yol (openRun);
+  // ekim koşusuna özel-durum kodu yok (devir maddesi).
+  const hasRun = Object.values(state.runs).some((r) => r.familyId === p.familyId);
+  if (hasRun) return withCatalog;
+  const run = { id: asRunId(deps.idgen()), familyId: p.familyId, currentProgId: p.id, startDate: deps.today };
+  return openRun(withCatalog, run, deps.today);
 }
 
 /** Yükle → ek → kalıcılaştır. main.ts bunu çağırıp createStore'a verir. */

@@ -2,8 +2,9 @@ import { h, render } from 'preact';
 import { App } from './ui/App';
 import { createLocalStorage, requestPersist } from './adapters/storage.local';
 import { createStore, initState } from './app/store';
-import { exportBackup } from './adapters/backup.file';
+import { exportBackup, exportCsv } from './adapters/backup.file';
 import { importBackup, toBackupState } from './app/backup';
+import { buildCsv } from './app/csv';
 import type { BackupServices } from './app/backup';
 import { registerServiceWorker } from './pwa/register';
 import { SEED } from './content/seed';
@@ -34,6 +35,8 @@ const services: BackupServices = {
     store.dispatch({ type: 'markBackup', at: Date.now() }); // share() sonrası senkron; jesti bloklamaz
     return res;
   },
+  // CSV yalnız dışa (D28) — markBackup YOK: CSV yedek değildir, yedek yaşını sıfırlamaz.
+  exportCsvNow: () => exportCsv(buildCsv(store.getState()), `trainlog-${todayLocalISO()}.csv`),
   restore: (text) => {
     const res = importBackup(store.getState(), text, SEED, { now: Date.now(), today: todayLocalISO(), idgen });
     if (res.ok) store.replace(res.state);

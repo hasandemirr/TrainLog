@@ -44,9 +44,10 @@ export interface ExportResult {
   text: string;
 }
 
-/** main.ts'in kabloladığı yedek yetenekleri; ui yalnızca bunları tüketir. */
+/** main.ts'in kabloladığı veri yetenekleri; ui yalnızca bunları tüketir. */
 export interface BackupServices {
   exportNow: () => ExportResult; // JEST-SENKRON (şart 1) — onClick'ten çağrılır
+  exportCsvNow: () => ExportResult; // CSV, yalnız dışa (D28); yedek SAYILMAZ
   restore: (text: string) => ImportResult; // içe al + store.replace
 }
 

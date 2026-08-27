@@ -9,17 +9,20 @@
 
 import type { ExportResult } from '../app/backup';
 
-/** `json` çağıran (UI) tarafından SENKRON hazırlanır (store senkron). Jestin İÇİNDE. */
-export function exportBackup(json: string, filename: string): ExportResult {
+/**
+ * İçerik çağıran (UI) tarafından SENKRON hazırlanır (store senkron). Jestin İÇİNDE.
+ * `mime` yedeğin JSON'u (D27) ile CSV dışa aktarmasını (D28) ayırır — zincir aynıdır.
+ */
+export function exportFile(content: string, filename: string, mime: string): ExportResult {
   // ── jest-senkron gövde: buraya await EKLENMEZ ─────────────────────────────
-  const file = new File([json], filename, { type: 'application/json' });
+  const file = new File([content], filename, { type: mime });
   const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
   const canShareFiles =
     typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare({ files: [file] });
 
   if (canShareFiles) {
     // share() = jestin ilk asenkron sınırı; dosya yukarıda SENKRON kuruldu
-    return { outcome: 'shared', promise: nav.share({ files: [file], title: filename }), text: json };
+    return { outcome: 'shared', promise: nav.share({ files: [file], title: filename }), text: content };
   }
 
   // Fallback: <a download> (iOS standalone'da sessizce çalışmayabilir → 3. seçenek metin)
@@ -32,8 +35,16 @@ export function exportBackup(json: string, filename: string): ExportResult {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    return { outcome: 'downloaded', text: json };
+    return { outcome: 'downloaded', text: content };
   } catch {
-    return { outcome: 'copy', text: json }; // kopyalanabilir metin (son fallback)
+    return { outcome: 'copy', text: content }; // kopyalanabilir metin (son fallback)
   }
 }
+
+/** JSON yedeği (D27) — tam sadakatli tek yedek biçimi. */
+export const exportBackup = (json: string, filename: string): ExportResult =>
+  exportFile(json, filename, 'application/json');
+
+/** CSV (D28) — YALNIZCA dışa aktarma; içe alma biçimi değildir. */
+export const exportCsv = (csv: string, filename: string): ExportResult =>
+  exportFile(csv, filename, 'text/csv;charset=utf-8');

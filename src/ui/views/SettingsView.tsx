@@ -47,6 +47,15 @@ export function SettingsView({ state, services, persist }: Props) {
       </div>
 
       <div class="card">
+        <p class="view__hint">CSV</p>
+        <p class="status">
+          Tablo programı için tek yönlü dışa aktarma (noktalı virgül + BOM). CSV geri
+          yüklenemez — kurtarma biçimi JSON yedeğidir.
+        </p>
+        <ExportButton label="CSV dışa aktar" run={services.exportCsvNow} variant="link" />
+      </div>
+
+      <div class="card">
         <p class="view__hint">Tanılama</p>
         <p>Şema: v{state.v}</p>
         <p>Hareket: {exerciseCount} · Kayıt: {recordCount}</p>

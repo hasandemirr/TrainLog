@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import type { PersistStatus } from '../../app/ports';
 import type { AppState } from '../../domain/types';
 import type { Action, ProfilePatch } from '../../app/actions';
-import type { BackupServices, BackupStatus } from '../../app/backup';
+import type { AppServices, BackupStatus } from '../../app/backup';
 import { backupStatus } from '../../app/backup';
 import { BackupImport } from '../components/BackupImport';
 import { ExportButton } from '../components/ExportButton';
@@ -26,7 +26,7 @@ function backupAgeText(b: BackupStatus): string {
 
 interface Props {
   state: AppState;
-  services: BackupServices;
+  services: AppServices;
   persist: PersistStatus;
   dispatch: (a: Action) => void;
 }
@@ -141,7 +141,7 @@ function ProfileSection({ state, dispatch }: { state: AppState; dispatch: (a: Ac
  * "Tüm verileri sil" (F4.6) — ÇİFT ONAY: düğme → uyarı paneli → ikinci düğme.
  * Merge dışındaki tek gerçek ezmedir (ARCH §3). SW önbelleğine dokunmaz (D36).
  */
-function DangerZone({ services }: { services: BackupServices }) {
+function DangerZone({ services }: { services: AppServices }) {
   const [arming, setArming] = useState(false);
   const [done, setDone] = useState(false);
 

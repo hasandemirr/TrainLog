@@ -1,8 +1,8 @@
-import type { BackupServices } from '../../app/backup';
+import type { AppServices } from '../../app/backup';
 import { BackupImport } from './BackupImport';
 
 /** F0.2 — ilk açılışta (veri yokken) yedekten yükle + kurulum yönlendirmesi (D27). */
-export function FirstRunBanner({ services }: { services: BackupServices }) {
+export function FirstRunBanner({ services }: { services: AppServices }) {
   return (
     <div class="card firstrun">
       <strong>Hoş geldin</strong>

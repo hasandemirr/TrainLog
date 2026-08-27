@@ -1,8 +1,8 @@
 import { useState } from 'preact/hooks';
-import type { BackupServices } from '../../app/backup';
+import type { AppServices } from '../../app/backup';
 
 /** Yedekten yükle — dosya veya yapıştırılan metin. Geri yükleme = merge (D27). */
-export function BackupImport({ services }: { services: BackupServices }) {
+export function BackupImport({ services }: { services: AppServices }) {
   const [msg, setMsg] = useState<string | null>(null);
 
   const restore = (text: string) => {

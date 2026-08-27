@@ -3,7 +3,7 @@ import { getRoute, goTop, onRouteChange } from './router';
 import type { TopView } from './router';
 import type { PersistStatus } from '../app/ports';
 import type { Store } from '../app/store';
-import type { BackupServices } from '../app/backup';
+import type { AppServices } from '../app/backup';
 import { backupStatus } from '../app/backup';
 import { TabBar } from './components/TabBar';
 import { UpdateBar } from './components/UpdateBar';
@@ -18,7 +18,7 @@ import { SettingsView } from './views/SettingsView';
 interface Props {
   store: Store;
   today: string;
-  services: BackupServices;
+  services: AppServices;
   idgen: () => string;
   requestPersist: () => Promise<PersistStatus>;
   registerSW: (onReady: (apply: () => void) => void) => void;

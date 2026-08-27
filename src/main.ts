@@ -5,7 +5,7 @@ import { createStore, freshState, initState } from './app/store';
 import { exportBackup, exportCsv } from './adapters/backup.file';
 import { importBackup, toBackupState } from './app/backup';
 import { buildCsv } from './app/csv';
-import type { BackupServices } from './app/backup';
+import type { AppServices } from './app/backup';
 import { registerServiceWorker } from './pwa/register';
 import { SEED } from './content/seed';
 import './ui/styles.css';
@@ -29,7 +29,7 @@ const state = initState(storage, SEED, { now, today, deviceId, idgen });
 const store = createStore(state, storage);
 
 // Yedek yetenekleri — exportNow JEST-SENKRON (şart 1): onClick → JSON → share, await yok.
-const services: BackupServices = {
+const services: AppServices = {
   exportNow: () => {
     const res = exportBackup(JSON.stringify(toBackupState(store.getState())), `trainlog-${todayLocalISO()}.json`);
     store.dispatch({ type: 'markBackup', at: Date.now() }); // share() sonrası senkron; jesti bloklamaz

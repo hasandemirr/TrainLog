@@ -130,6 +130,14 @@ export function sessionSummary(state: AppState, session: Session): SessionSummar
   return { session, dayLabel: day?.label ?? session.dayId, entries, totalVolume, totalSets };
 }
 
+/** Katalogdaki AKTİF (arşivsiz) hareketler, ada göre — program düzenlemede yuvaya
+ *  hareket ekleme listesi (arşivli hareket yeni sürüme eklenmez, S5 kuralı). */
+export function activeExercises(state: AppState): Exercise[] {
+  return Object.values(state.catalog.exercises)
+    .filter((e) => e.archived !== true)
+    .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+}
+
 /** İkame adayları (D47): arşivlenmemiş hareketler, ÖNCE aynı bölge, sonra ada göre. */
 export function substitutionOptions(state: AppState, currentExId: ExerciseId): Exercise[] {
   const zone = state.catalog.exercises[currentExId]?.zone;

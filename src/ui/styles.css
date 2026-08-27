@@ -507,6 +507,41 @@ body {
   font-size: 1rem;
 }
 
+/* Program düzenleme satırı (S6, F3.2) */
+.editrow__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editrow__ops {
+  display: flex;
+  gap: 8px;
+}
+
+.editrow__ops button {
+  min-width: 44px;
+}
+
+.editrow__ops button:disabled {
+  color: var(--muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.editadd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.editadd .measrow {
+  flex: 1;
+  min-width: 220px;
+}
+
 /* Wake Lock anahtarı: satırın tamamı dokunma hedefi (≥44px), kutu büyütüldü */
 .wakelock {
   display: flex;

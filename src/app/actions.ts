@@ -4,7 +4,7 @@
 import { recordKey } from '../domain/ids';
 import type { ExerciseId, ISODate, RecordKey, RunId, SessionId } from '../domain/ids';
 import { openRun } from '../domain/program';
-import type { AppState, ExRecord, Exercise, Program, Run, Session, SetEntry } from '../domain/types';
+import type { AppState, ExRecord, Exercise, Profile, Program, Run, Session, SetEntry } from '../domain/types';
 
 /** Bir kaydın yeri + tembel doğum için gereken bilgi. */
 export interface RecordAt {
@@ -32,12 +32,30 @@ export type Action =
   | { type: 'substitute'; at: RecordAt; newExId: ExerciseId; updatedAt: number }
   | { type: 'addExercise'; exercise: Exercise; updatedAt: number }
   | { type: 'markBackup'; at: number } // yedek alındı → meta.lastBackup (D29)
+  // Kişisel bilgiler (F4.5): asgari, hepsi isteğe bağlı; null → alanı sil, hepsi
+  // boşalırsa profil düşer. Yalnızca cihazda; yedeğe girer, hiçbir yere gönderilmez.
+  | { type: 'setProfile'; patch: ProfilePatch; updatedAt: number }
   // Ölçüm (F2.4): measures tarih anahtarlı; aynı tarihe alan yazımı son-yazan-kazanır.
   | { type: 'setMeasure'; date: ISODate; field: string; value: number | string | null; updatedAt: number }
   // Program yönetimi (F3, S5)
   | { type: 'startRun'; program?: Program; run: Run; today: ISODate; updatedAt: number } // yeni koşu (mevcutu kapatır)
   | { type: 'saveProgramVersion'; program: Program; runId: RunId; updatedAt: number } // düzenleme = yeni sürüm + işaretçi (D15)
   | { type: 'archiveExercise'; exId: ExerciseId; updatedAt: number }; // silme yok; arşivle
+
+export type ProfilePatch = Partial<{ name: string | null; birthYear: number | null; heightCm: number | null }>;
+
+/** Profil alanlarını yamala; null → alanı düşür. Boşalırsa undefined döner. */
+function patchProfile(cur: Profile | undefined, patch: ProfilePatch, updatedAt: number): Profile | undefined {
+  const next: Profile = { ...(cur ?? {}), updatedAt };
+  for (const key of ['name', 'birthYear', 'heightCm'] as const) {
+    const v = patch[key];
+    if (v === undefined) continue;
+    if (v === null) delete next[key];
+    else Object.assign(next, { [key]: v });
+  }
+  const filled = next.name !== undefined || next.birthYear !== undefined || next.heightCm !== undefined;
+  return filled ? next : undefined;
+}
 
 const emptySet = (): SetEntry => ({ kg: null, reps: null });
 const emptySets = (n: number): SetEntry[] => Array.from({ length: n }, emptySet);
@@ -89,6 +107,14 @@ export function reduce(state: AppState, action: Action): AppState {
 
   if (action.type === 'markBackup') {
     return { ...state, meta: { ...state.meta, lastBackup: action.at, updatedAt: action.at } };
+  }
+
+  if (action.type === 'setProfile') {
+    const profile = patchProfile(state.profile, action.patch, action.updatedAt);
+    const next: AppState = { ...state, meta: { ...state.meta, updatedAt: action.updatedAt } };
+    if (profile === undefined) delete next.profile;
+    else next.profile = profile;
+    return next;
   }
 
   if (action.type === 'setMeasure') {

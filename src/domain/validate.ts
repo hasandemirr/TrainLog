@@ -7,6 +7,7 @@ import type {
   ExerciseKind,
   Meta,
   Prescribed,
+  Profile,
   Program,
   ProgramDay,
   Run,
@@ -102,6 +103,14 @@ function isMeasureRow(x: unknown): x is Record<string, number | string> {
   return isObj(x) && Object.values(x).every((v) => v === undefined || isNum(v) || isStr(v));
 }
 
+function isProfile(x: unknown): x is Profile {
+  if (!isObj(x)) return false;
+  if (x.name !== undefined && !isStr(x.name)) return false;
+  if (x.birthYear !== undefined && !isNum(x.birthYear)) return false;
+  if (x.heightCm !== undefined && !isNum(x.heightCm)) return false;
+  return isNum(x.updatedAt);
+}
+
 /** Bilinmeyen bir değerin geçerli v2 AppState olup olmadığını söyler (D21). */
 export function isAppState(x: unknown): x is AppState {
   if (!isObj(x)) return false;
@@ -117,5 +126,6 @@ export function isAppState(x: unknown): x is AppState {
   if (x.timer !== undefined) {
     if (!isObj(x.timer) || !isNum(x.timer.tEnd) || !isStr(x.timer.label)) return false;
   }
+  if (x.profile !== undefined && !isProfile(x.profile)) return false; // salt-eklemeli
   return true;
 }

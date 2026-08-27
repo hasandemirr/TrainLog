@@ -1,9 +1,11 @@
 import type { PersistStatus } from '../../app/ports';
 import type { AppState } from '../../domain/types';
+import type { Action, ProfilePatch } from '../../app/actions';
 import type { BackupServices, BackupStatus } from '../../app/backup';
 import { backupStatus } from '../../app/backup';
 import { BackupImport } from '../components/BackupImport';
 import { ExportButton } from '../components/ExportButton';
+import { NumInput } from '../components/NumInput';
 
 const PERSIST_TEXT: Record<PersistStatus, string> = {
   unknown: 'Kalıcı depolama: denetleniyor…',
@@ -24,9 +26,10 @@ interface Props {
   state: AppState;
   services: BackupServices;
   persist: PersistStatus;
+  dispatch: (a: Action) => void;
 }
 
-export function SettingsView({ state, services, persist }: Props) {
+export function SettingsView({ state, services, persist, dispatch }: Props) {
   const exerciseCount = Object.keys(state.catalog.exercises).length;
   const recordCount = Object.keys(state.records).length;
   const backup = backupStatus(state, Date.now());
@@ -55,11 +58,67 @@ export function SettingsView({ state, services, persist }: Props) {
         <ExportButton label="CSV dışa aktar" run={services.exportCsvNow} variant="link" />
       </div>
 
+      <ProfileSection state={state} dispatch={dispatch} />
+
       <div class="card">
         <p class="view__hint">Tanılama</p>
         <p>Şema: v{state.v}</p>
         <p>Hareket: {exerciseCount} · Kayıt: {recordCount}</p>
       </div>
     </section>
+  );
+}
+
+/**
+ * Kişisel bilgiler (F4.5) — ASGARİ: ad, doğum yılı, boy; hepsi isteğe bağlı.
+ * Yalnızca cihazda; yedeğe girer, hiçbir yere gönderilmez (D5 yerel-öncelikli).
+ */
+function ProfileSection({ state, dispatch }: { state: AppState; dispatch: (a: Action) => void }) {
+  const p = state.profile;
+  const set = (patch: ProfilePatch) => dispatch({ type: 'setProfile', patch, updatedAt: Date.now() });
+
+  return (
+    <div class="card">
+      <p class="view__hint">Kişisel bilgiler</p>
+      <p class="status">
+        Tamamı isteğe bağlı; yalnızca bu cihazda durur ve yedeğine girer. Hiçbir sunucuya
+        gönderilmez.
+      </p>
+      <div class="measform">
+        <label class="measrow">
+          <span>Ad</span>
+          <input
+            class="note"
+            type="text"
+            aria-label="Ad"
+            value={p?.name ?? ''}
+            onInput={(e) => {
+              const v = (e.currentTarget as HTMLInputElement).value.trim();
+              set({ name: v.length > 0 ? v : null });
+            }}
+          />
+        </label>
+        <label class="measrow">
+          <span>Doğum yılı</span>
+          <NumInput
+            value={p?.birthYear ?? null}
+            placeholder="—"
+            inputMode="numeric"
+            ariaLabel="Doğum yılı"
+            onCommit={(v) => set({ birthYear: v })}
+          />
+        </label>
+        <label class="measrow">
+          <span>Boy (cm)</span>
+          <NumInput
+            value={p?.heightCm ?? null}
+            placeholder="—"
+            inputMode="decimal"
+            ariaLabel="Boy (cm)"
+            onCommit={(v) => set({ heightCm: v })}
+          />
+        </label>
+      </div>
+    </div>
   );
 }

@@ -77,6 +77,15 @@ export interface Meta {
   lastBackup: number; // D12, D29
 }
 
+/** Kişisel bilgiler (F4.5) — ASGARİ ve tamamı isteğe bağlı; yalnızca cihazda durur,
+ *  yedeğe girer, hiçbir yere gönderilmez. Salt-eklemeli alan → şema v:2 kalır (S5 kuralı). */
+export interface Profile {
+  name?: string;
+  birthYear?: number;
+  heightCm?: number;
+  updatedAt: number; // birleştirme anahtarı (LWW) — D27
+}
+
 export interface Timer {
   tEnd: number; // D42: mutlak bitiş
   label: string;
@@ -96,4 +105,5 @@ export interface AppState {
   records: Record<RecordKey, ExRecord>;
   measures: Record<ISODate, MeasureRow>;
   timer?: Timer;
+  profile?: Profile; // F4.5 — asgari kişisel bilgiler
 }

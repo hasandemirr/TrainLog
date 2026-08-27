@@ -4,7 +4,7 @@
 // bazında birleşir, çakışmada belirlenimci (kararlı seri) seçim. Sonuç idempotent
 // ve DATA açısından sıra bağımsızdır. meta.deviceId kimliktir → yerel (base) korunur;
 // bu tek asimetridir (rev/lastBackup/updatedAt = max, dolayısıyla simetrik).
-import type { AppState } from './types';
+import type { AppState, Profile } from './types';
 
 function sortDeep(x: unknown): unknown {
   if (Array.isArray(x)) return x.map(sortDeep);
@@ -39,7 +39,15 @@ function mergeMap<T>(
   return out;
 }
 
+/** Kişisel bilgiler: tek nesne, updatedAt ile son-yazan-kazanır (kayıtlarla aynı kural). */
+function mergeProfile(a: Profile | undefined, b: Profile | undefined): Profile | undefined {
+  if (a === undefined) return b;
+  if (b === undefined) return a;
+  return lww(a, b);
+}
+
 export function merge(base: AppState, incoming: AppState): AppState {
+  const profile = mergeProfile(base.profile, incoming.profile);
   return {
     v: 2,
     meta: {
@@ -57,5 +65,6 @@ export function merge(base: AppState, incoming: AppState): AppState {
     records: mergeMap(base.records, incoming.records, lww),
     measures: mergeMap(base.measures, incoming.measures, byStable),
     ...(base.timer !== undefined ? { timer: base.timer } : {}),
+    ...(profile !== undefined ? { profile } : {}),
   };
 }

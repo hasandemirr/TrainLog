@@ -56,7 +56,7 @@ export function App({ store, today, services, idgen, requestPersist, registerSW 
         {route === 'workout' && <WorkoutView state={state} today={today} dispatch={store.dispatch} />}
         {route === 'progress' && <ProgressView state={state} today={today} dispatch={store.dispatch} />}
         {route === 'program' && <ProgramView state={state} today={today} dispatch={store.dispatch} idgen={idgen} />}
-        {route === 'settings' && <SettingsView state={state} services={services} persist={persist} />}
+        {route === 'settings' && <SettingsView state={state} services={services} persist={persist} dispatch={store.dispatch} />}
       </main>
       {state.timer && (
         <TimerBar

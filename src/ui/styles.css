@@ -455,3 +455,28 @@ body {
   justify-content: space-between;
   gap: 8px;
 }
+
+.editrow {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.editfields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.editfields label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.editfields .num {
+  width: 64px;
+  font-size: 1rem;
+}

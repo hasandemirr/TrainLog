@@ -17,11 +17,12 @@ interface Props {
   store: Store;
   today: string;
   services: BackupServices;
+  idgen: () => string;
   requestPersist: () => Promise<PersistStatus>;
   registerSW: (onReady: (apply: () => void) => void) => void;
 }
 
-export function App({ store, today, services, requestPersist, registerSW }: Props) {
+export function App({ store, today, services, idgen, requestPersist, registerSW }: Props) {
   const [, setTick] = useState(0);
   const [route, setRoute] = useState<TopView>(getRoute());
   const [persist, setPersist] = useState<PersistStatus>('unknown');
@@ -47,7 +48,7 @@ export function App({ store, today, services, requestPersist, registerSW }: Prop
         {route === 'workout' && isFresh && <FirstRunBanner services={services} />}
         {route === 'workout' && <WorkoutView state={state} today={today} dispatch={store.dispatch} />}
         {route === 'progress' && <ProgressView state={state} today={today} dispatch={store.dispatch} />}
-        {route === 'program' && <ProgramView />}
+        {route === 'program' && <ProgramView state={state} today={today} dispatch={store.dispatch} idgen={idgen} />}
         {route === 'settings' && <SettingsView state={state} services={services} persist={persist} />}
       </main>
       {state.timer && (

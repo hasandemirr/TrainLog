@@ -44,5 +44,5 @@ const services: BackupServices = {
 const root = document.getElementById('app');
 if (root) {
   if (!location.hash) history.replaceState(null, '', '#/workout');
-  render(h(App, { store, today, services, requestPersist, registerSW: registerServiceWorker }), root);
+  render(h(App, { store, today, services, idgen, requestPersist, registerSW: registerServiceWorker }), root);
 }

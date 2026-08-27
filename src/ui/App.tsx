@@ -58,13 +58,17 @@ export function App({ store, today, services, idgen, requestPersist, registerSW 
         {route === 'program' && <ProgramView state={state} today={today} dispatch={store.dispatch} idgen={idgen} />}
         {route === 'settings' && <SettingsView state={state} services={services} persist={persist} dispatch={store.dispatch} />}
       </main>
-      {state.timer && (
-        <TimerBar
-          timer={state.timer}
-          onClear={() => store.dispatch({ type: 'clearTimer', updatedAt: Date.now() })}
-        />
+      {(state.timer || apply) && (
+        <div class="barstack">
+          {apply && <UpdateBar onApply={apply} />}
+          {state.timer && (
+            <TimerBar
+              timer={state.timer}
+              onClear={() => store.dispatch({ type: 'clearTimer', updatedAt: Date.now() })}
+            />
+          )}
+        </div>
       )}
-      {apply && <UpdateBar onApply={apply} />}
       <TabBar active={route} onSelect={goTop} />
     </>
   );

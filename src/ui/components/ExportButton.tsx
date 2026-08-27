@@ -41,8 +41,12 @@ export function ExportButton({
       <button type="button" class={variant} onClick={onClick}>
         {label}
       </button>
-      {msg && <p class="status">{msg}</p>}
-      {text && <textarea class="note" rows={3} readOnly value={text} />}
+      {msg && (
+        <p class="status" role="status">
+          {msg}
+        </p>
+      )}
+      {text && <textarea class="note" rows={3} readOnly aria-label="Yedek metni" value={text} />}
     </>
   );
 }

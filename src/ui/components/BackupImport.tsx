@@ -38,7 +38,7 @@ export function BackupImport({ services }: { services: BackupServices }) {
     <div class="import">
       <label class="link">
         Dosyadan yükle
-        <input type="file" accept="application/json,.json" onChange={onFile} hidden />
+        <input class="visually-hidden" type="file" accept="application/json,.json" onChange={onFile} />
       </label>
       <details>
         <summary class="link">Metinden yükle</summary>
@@ -49,7 +49,11 @@ export function BackupImport({ services }: { services: BackupServices }) {
           onChange={(e) => restore((e.currentTarget as HTMLTextAreaElement).value)}
         />
       </details>
-      {msg && <p class="status">{msg}</p>}
+      {msg && (
+        <p class="status" role="status">
+          {msg}
+        </p>
+      )}
     </div>
   );
 }

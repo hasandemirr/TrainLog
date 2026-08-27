@@ -117,12 +117,19 @@ body {
   color: var(--accent);
 }
 
-/* Güncelleme çubuğu (D41) — alt barın hemen üstünde */
-.updatebar {
+/* Alt barın üstündeki çubuk yığını: sayaç + güncelleme aynı anda varsa üst üste
+   binmez, alt alta dizilir (S3 notundaki cila maddesi). */
+.barstack {
   position: fixed;
   left: 0;
   right: 0;
   bottom: var(--tabbar-h);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Güncelleme çubuğu (D41) — yığının içinde */
+.updatebar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -144,6 +151,25 @@ body {
   cursor: pointer;
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Görsel olarak gizli ama ODAKLANABİLİR (gizli input klavyeyle erişilemez olurdu) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Hareket azaltma (D: ARCH §6) — geçişler YALNIZCA no-preference'ta tanımlanır;
+   reduce tercihinde tanımlanmadıkları için hiç çalışmazlar. */
 @media (prefers-reduced-motion: no-preference) {
   .tab {
     transition: color 120ms ease;
@@ -287,12 +313,8 @@ body {
   margin-top: 6px;
 }
 
-/* Dinlenme sayacı çubuğu (alt barın üstünde) */
+/* Dinlenme sayacı çubuğu (yığının içinde, alt bara en yakın) */
 .timerbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: var(--tabbar-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -363,7 +385,7 @@ body {
 }
 
 .seg {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -422,7 +444,7 @@ body {
 }
 
 .calcell {
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface);

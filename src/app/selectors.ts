@@ -187,3 +187,87 @@ export function workoutModel(
     .filter((c): c is ExerciseCard => c !== null);
   return { run, program, day, session, week, suggestion, cards };
 }
+
+// ── İlerleme (F2) — hepsi türetme (D8) ────────────────────────────────────
+
+function topKg(rec: ExRecord): number | null {
+  let max: number | null = null;
+  for (const s of rec.sets) if (s.kg !== null && (max === null || s.kg > max)) max = s.kg;
+  return max;
+}
+
+export interface SeriesPoint {
+  date: ISODate;
+  sessionId: SessionId;
+  topKg: number | null;
+  volume: number;
+  record: ExRecord;
+}
+
+/** Bir hareketin zaman serisi (kg/hacim eğrisi + seans listesi), tarihe göre sıralı. */
+export function exerciseSeries(state: AppState, exId: ExerciseId): SeriesPoint[] {
+  const points: SeriesPoint[] = [];
+  for (const [k, rec] of Object.entries(state.records) as [RecordKey, ExRecord][]) {
+    if (rec.exId !== exId || !rec.sets.some((s) => s.reps !== null)) continue;
+    const { sessionId: sid } = parseRecordKey(k);
+    const session = state.sessions[sid];
+    if (!session) continue;
+    points.push({ date: session.date, sessionId: sid, topKg: topKg(rec), volume: setVolume(rec.sets), record: rec });
+  }
+  return points.sort((a, b) => compareSessions(a.sessionId, b.sessionId));
+}
+
+/** En az bir dolu kaydı olan hareketler (ilerleme seçici). */
+export function trackedExercises(state: AppState): Exercise[] {
+  const ids = new Set<string>();
+  for (const rec of Object.values(state.records)) {
+    if (rec.sets.some((s) => s.reps !== null)) ids.add(rec.exId);
+  }
+  return [...ids]
+    .map((id) => state.catalog.exercises[id as ExerciseId])
+    .filter((e): e is Exercise => e !== undefined)
+    .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+}
+
+export interface GeneralStats {
+  sessions: number;
+  records: number;
+  totalVolume: number;
+  exercisesTracked: number;
+}
+
+export function generalStats(state: AppState): GeneralStats {
+  let totalVolume = 0;
+  let records = 0;
+  for (const rec of Object.values(state.records)) {
+    if (!rec.sets.some((s) => s.reps !== null)) continue;
+    records += 1;
+    totalVolume += setVolume(rec.sets);
+  }
+  return { sessions: Object.keys(state.sessions).length, records, totalVolume, exercisesTracked: trackedExercises(state).length };
+}
+
+/** measures'ta sayısal alanların adları (ölçüm segmenti seçici). */
+export function measureFields(state: AppState): string[] {
+  const fields = new Set<string>();
+  for (const row of Object.values(state.measures)) {
+    for (const [k, v] of Object.entries(row)) if (typeof v === 'number') fields.add(k);
+  }
+  return [...fields].sort((a, b) => a.localeCompare(b, 'tr'));
+}
+
+export function measureSeries(state: AppState, field: string): { date: ISODate; value: number }[] {
+  const points: { date: ISODate; value: number }[] = [];
+  for (const [date, row] of Object.entries(state.measures)) {
+    const v = row[field];
+    if (typeof v === 'number') points.push({ date, value: v });
+  }
+  return points.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+/** Tarih → seanslar indeksi (takvim). */
+export function sessionsByDate(state: AppState): Record<ISODate, Session[]> {
+  const map: Record<ISODate, Session[]> = {};
+  for (const s of Object.values(state.sessions)) (map[s.date] ??= []).push(s);
+  return map;
+}

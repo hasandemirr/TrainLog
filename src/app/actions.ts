@@ -2,7 +2,7 @@
 // (edge'de yakalanır); reduce saftır. Kayıtlar tembel doğar; seans ilk kayıtla doğar
 // (D17) — tarih at.session'da açılışta sabittir, reduce "şimdi" kullanmaz.
 import { recordKey } from '../domain/ids';
-import type { ExerciseId, RecordKey, SessionId } from '../domain/ids';
+import type { ExerciseId, ISODate, RecordKey, SessionId } from '../domain/ids';
 import type { AppState, ExRecord, Exercise, Session, SetEntry } from '../domain/types';
 
 /** Bir kaydın yeri + tembel doğum için gereken bilgi. */
@@ -30,7 +30,9 @@ export type Action =
   // DOKUNULMAZ. Yeni hareket kataloğa kullanıcı içeriği olarak girer (userModified).
   | { type: 'substitute'; at: RecordAt; newExId: ExerciseId; updatedAt: number }
   | { type: 'addExercise'; exercise: Exercise; updatedAt: number }
-  | { type: 'markBackup'; at: number }; // yedek alındı → meta.lastBackup (D29)
+  | { type: 'markBackup'; at: number } // yedek alındı → meta.lastBackup (D29)
+  // Ölçüm (F2.4): measures tarih anahtarlı; aynı tarihe alan yazımı son-yazan-kazanır.
+  | { type: 'setMeasure'; date: ISODate; field: string; value: number | string | null; updatedAt: number };
 
 const emptySet = (): SetEntry => ({ kg: null, reps: null });
 const emptySets = (n: number): SetEntry[] => Array.from({ length: n }, emptySet);
@@ -82,6 +84,16 @@ export function reduce(state: AppState, action: Action): AppState {
 
   if (action.type === 'markBackup') {
     return { ...state, meta: { ...state.meta, lastBackup: action.at, updatedAt: action.at } };
+  }
+
+  if (action.type === 'setMeasure') {
+    const row = { ...(state.measures[action.date] ?? {}) };
+    if (action.value === null) delete row[action.field];
+    else row[action.field] = action.value;
+    const measures = { ...state.measures };
+    if (Object.keys(row).length === 0) delete measures[action.date];
+    else measures[action.date] = row;
+    return { ...state, measures, meta: { ...state.meta, updatedAt: action.updatedAt } };
   }
 
   if (action.type === 'addExercise') {

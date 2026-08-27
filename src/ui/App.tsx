@@ -4,10 +4,12 @@ import type { TopView } from './router';
 import type { PersistStatus } from '../app/ports';
 import type { Store } from '../app/store';
 import type { BackupServices } from '../app/backup';
+import { backupStatus } from '../app/backup';
 import { TabBar } from './components/TabBar';
 import { UpdateBar } from './components/UpdateBar';
 import { TimerBar } from './components/TimerBar';
 import { FirstRunBanner } from './components/FirstRunBanner';
+import { BackupReminder } from './components/BackupReminder';
 import { WorkoutView } from './views/WorkoutView';
 import { ProgressView } from './views/ProgressView';
 import { ProgramView } from './views/ProgramView';
@@ -27,6 +29,7 @@ export function App({ store, today, services, idgen, requestPersist, registerSW 
   const [route, setRoute] = useState<TopView>(getRoute());
   const [persist, setPersist] = useState<PersistStatus>('unknown');
   const [apply, setApply] = useState<(() => void) | null>(null);
+  const [remindOff, setRemindOff] = useState(false); // oturumluk UI durumu (D8)
 
   useEffect(() => store.subscribe(() => setTick((t) => t + 1)), [store]);
   useEffect(() => onRouteChange(setRoute), []);
@@ -41,11 +44,15 @@ export function App({ store, today, services, idgen, requestPersist, registerSW 
 
   const state = store.getState();
   const isFresh = Object.keys(state.sessions).length === 0 && Object.keys(state.records).length === 0;
+  const backup = backupStatus(state, Date.now()); // D29 — yalnızca kayıt varken uyarır
 
   return (
     <>
       <main class="content">
         {route === 'workout' && isFresh && <FirstRunBanner services={services} />}
+        {route === 'workout' && backup.remind && !remindOff && (
+          <BackupReminder status={backup} run={services.exportNow} onDismiss={() => setRemindOff(true)} />
+        )}
         {route === 'workout' && <WorkoutView state={state} today={today} dispatch={store.dispatch} />}
         {route === 'progress' && <ProgressView state={state} today={today} dispatch={store.dispatch} />}
         {route === 'program' && <ProgramView state={state} today={today} dispatch={store.dispatch} idgen={idgen} />}

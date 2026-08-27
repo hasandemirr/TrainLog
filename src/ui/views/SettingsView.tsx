@@ -1,8 +1,9 @@
-import { useState } from 'preact/hooks';
 import type { PersistStatus } from '../../app/ports';
 import type { AppState } from '../../domain/types';
-import type { BackupServices } from '../../app/backup';
+import type { BackupServices, BackupStatus } from '../../app/backup';
+import { backupStatus } from '../../app/backup';
 import { BackupImport } from '../components/BackupImport';
+import { ExportButton } from '../components/ExportButton';
 
 const PERSIST_TEXT: Record<PersistStatus, string> = {
   unknown: 'Kalıcı depolama: denetleniyor…',
@@ -11,6 +12,14 @@ const PERSIST_TEXT: Record<PersistStatus, string> = {
   unsupported: 'Kalıcı depolama: desteklenmiyor',
 };
 
+/** Yedek yaşı metni (D29) — semantik: "N gündür yedek yok", tahliye tahmini değil. */
+function backupAgeText(b: BackupStatus): string {
+  if (b.ageDays === null) return 'Son yedek: hiç';
+  const when = new Date(b.lastBackup).toLocaleString('tr');
+  const age = b.ageDays === 0 ? 'bugün' : `${b.ageDays} gün önce`;
+  return `Son yedek: ${age} (${when})`;
+}
+
 interface Props {
   state: AppState;
   services: BackupServices;
@@ -18,24 +27,9 @@ interface Props {
 }
 
 export function SettingsView({ state, services, persist }: Props) {
-  const [exportMsg, setExportMsg] = useState<string | null>(null);
   const exerciseCount = Object.keys(state.catalog.exercises).length;
   const recordCount = Object.keys(state.records).length;
-  const lastBackup = state.meta.lastBackup;
-
-  const onExport = () => {
-    const res = services.exportNow(); // JEST-SENKRON (şart 1) — önce çağır
-    if (res.outcome === 'shared') {
-      setExportMsg('Paylaşım açıldı…');
-      res.promise
-        ?.then(() => setExportMsg('Paylaşıldı.'))
-        .catch(() => setExportMsg('Paylaşım kapandı — metinden kopyalayabilirsin.'));
-    } else if (res.outcome === 'downloaded') {
-      setExportMsg('İndirildi.');
-    } else {
-      setExportMsg('Paylaşım/indirme yok — metni elle kopyala.');
-    }
-  };
+  const backup = backupStatus(state, Date.now());
 
   return (
     <section class="view">
@@ -47,11 +41,8 @@ export function SettingsView({ state, services, persist }: Props) {
 
       <div class="card">
         <p class="view__hint">Yedek</p>
-        <button type="button" class="btn" onClick={onExport}>
-          Dışa aktar
-        </button>
-        {exportMsg && <p class="status">{exportMsg}</p>}
-        <p class="status">Son yedek: {lastBackup > 0 ? new Date(lastBackup).toLocaleString('tr') : 'hiç'}</p>
+        <p class={'status' + (backup.remind ? ' status--warn' : '')}>{backupAgeText(backup)}</p>
+        <ExportButton label="Dışa aktar" run={services.exportNow} />
         <BackupImport services={services} />
       </div>
 

@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { importBackup, toBackupState } from '../src/app/backup';
+import { backupStatus, importBackup, toBackupState } from '../src/app/backup';
 import { sow } from '../src/app/store';
 import { reduce } from '../src/app/actions';
 import { createSession } from '../src/domain/session';
 import { workoutModel } from '../src/app/selectors';
 import { emptyState } from '../src/domain/state';
 import { asExerciseId } from '../src/domain/ids';
+import type { AppState } from '../src/domain/types';
+import { record, rkey } from './fixtures/build';
 import { isAppState } from '../src/domain/validate';
 import { SEED } from '../src/content/seed';
 
@@ -92,5 +94,59 @@ describe('importBackup — geri yükleme = merge (D27); tohum tek kaynak', () =>
   it('bozuk JSON / tanınmayan biçim → hata', () => {
     expect(importBackup(seeded(), '{bozuk', SEED, { now: 1, today: '2026-08-01', idgen: mkIdgen() }).ok).toBe(false);
     expect(importBackup(seeded(), JSON.stringify({ foo: 1 }), SEED, { now: 1, today: '2026-08-01', idgen: mkIdgen() }).ok).toBe(false);
+  });
+});
+
+describe('backupStatus — yedek yaşı + 21 gün eşiği (D29)', () => {
+  const withRecord = (lastBackup: number): AppState => {
+    const s = seeded();
+    s.meta.lastBackup = lastBackup;
+    s.records[rkey('2026-08-01', 1, 0)] = record('ex_barbell_row', [[60, 8]], 1000);
+    return s;
+  };
+  const DAY = 86_400_000;
+
+  it('kayıt yokken hatırlatmaz (boş uygulamayı rahatsız etmez)', () => {
+    const s = seeded();
+    s.meta.lastBackup = 0;
+    const st = backupStatus(s, 100 * DAY);
+    expect(st.hasData).toBe(false);
+    expect(st.remind).toBe(false);
+    expect(st.reason).toBe('never'); // gerekçe hesaplanır ama uyarı çıkmaz
+  });
+
+  it('kayıt var + hiç yedek yok → hatırlatır (reason: never, yaş null)', () => {
+    const st = backupStatus(withRecord(0), 5 * DAY);
+    expect(st.ageDays).toBeNull();
+    expect(st.remind).toBe(true);
+    expect(st.reason).toBe('never');
+  });
+
+  it('20 gün → hatırlatmaz; 21 gün → hatırlatır (eşik dahil)', () => {
+    const now = 100 * DAY;
+    const at20 = backupStatus(withRecord(now - 20 * DAY), now);
+    expect(at20.ageDays).toBe(20);
+    expect(at20.remind).toBe(false);
+    expect(at20.reason).toBeNull();
+
+    const at21 = backupStatus(withRecord(now - 21 * DAY), now);
+    expect(at21.ageDays).toBe(21);
+    expect(at21.remind).toBe(true);
+    expect(at21.reason).toBe('stale');
+  });
+
+  it('yaş gün tabanına yuvarlanır; ileri tarihli yedek negatif yaş vermez', () => {
+    const now = 100 * DAY;
+    expect(backupStatus(withRecord(now - (2 * DAY + 3600_000)), now).ageDays).toBe(2);
+    expect(backupStatus(withRecord(now + DAY), now).ageDays).toBe(0);
+  });
+
+  it('markBackup sonrası hatırlatma kapanır (aksiyon → yaş sıfır)', () => {
+    const now = 100 * DAY;
+    const stale = withRecord(now - 30 * DAY);
+    expect(backupStatus(stale, now).remind).toBe(true);
+    const after = reduce(stale, { type: 'markBackup', at: now });
+    expect(backupStatus(after, now).remind).toBe(false);
+    expect(backupStatus(after, now).ageDays).toBe(0);
   });
 });

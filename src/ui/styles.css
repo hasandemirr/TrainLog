@@ -82,6 +82,10 @@ body {
   color: var(--ok);
 }
 
+.status--warn {
+  color: #e0b341;
+}
+
 /* Sabit alt bar: yükseklik = dokunma satırı + alt inset. Yatay iç dolgu >=12px
    (+ yan insetler) — uç sekmeler köşe kavisine yaslanmaz. */
 .tabbar {

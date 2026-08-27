@@ -100,3 +100,30 @@ export function importBackup(
   };
   return { ok: true, state: closeStale(merged, deps.today, deps.now), stats };
 }
+
+// ── Yedek yaşı + hatırlatma (D29, S6) ─────────────────────────────────────
+// SEMANTİK: eşik "21 gündür yedek yok" der; tahliye/veri kaybı TAHMİNİ DEĞİLDİR.
+// Tarayıcının veriyi ne zaman atacağı bilinemez (D25: persist garanti değil).
+
+export const BACKUP_REMIND_DAYS = 21; // ürün politikası (D29)
+
+const DAY_MS = 86_400_000;
+
+export type BackupReason = 'never' | 'stale';
+
+export interface BackupStatus {
+  lastBackup: number; // 0 = hiç alınmadı
+  ageDays: number | null; // hiç alınmadıysa null
+  hasData: boolean; // kayıt yoksa boş uygulamayı rahatsız etmeyiz
+  remind: boolean;
+  reason: BackupReason | null;
+}
+
+/** Yedek yaşı (saf, D8 türetme). `now` edge'de yakalanır, param olarak gelir. */
+export function backupStatus(state: AppState, now: number): BackupStatus {
+  const lastBackup = state.meta.lastBackup;
+  const hasData = Object.keys(state.records).length > 0;
+  const ageDays = lastBackup > 0 ? Math.max(0, Math.floor((now - lastBackup) / DAY_MS)) : null;
+  const reason: BackupReason | null = ageDays === null ? 'never' : ageDays >= BACKUP_REMIND_DAYS ? 'stale' : null;
+  return { lastBackup, ageDays, hasData, remind: hasData && reason !== null, reason };
+}

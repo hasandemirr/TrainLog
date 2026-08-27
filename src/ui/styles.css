@@ -507,6 +507,20 @@ body {
   font-size: 1rem;
 }
 
+/* Wake Lock anahtarı: satırın tamamı dokunma hedefi (≥44px), kutu büyütüldü */
+.wakelock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.wakelock input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+}
+
 /* ── Kullanım kılavuzu (S6) ─────────────────────────── */
 .guide__h {
   margin: 0 0 6px;

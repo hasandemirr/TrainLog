@@ -177,8 +177,8 @@ function MeasureSection({ state, today, dispatch }: { state: AppState; today: st
 
   return (
     <div>
-      <label class="status">
-        Tarih{' '}
+      <label class="status measrow">
+        <span>Tarih</span>
         <input class="note" type="date" value={date} onInput={(e) => setDate((e.currentTarget as HTMLInputElement).value)} />
       </label>
       <div class="measform">

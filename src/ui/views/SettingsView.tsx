@@ -72,6 +72,8 @@ export function SettingsView({ state, services, persist, dispatch }: Props) {
         </button>
       </div>
 
+      <DangerZone services={services} />
+
       <div class="card">
         <p class="view__hint">Tanılama</p>
         <p>Şema: v{state.v}</p>
@@ -131,6 +133,52 @@ function ProfileSection({ state, dispatch }: { state: AppState; dispatch: (a: Ac
           />
         </label>
       </div>
+    </div>
+  );
+}
+
+/**
+ * "Tüm verileri sil" (F4.6) — ÇİFT ONAY: düğme → uyarı paneli → ikinci düğme.
+ * Merge dışındaki tek gerçek ezmedir (ARCH §3). SW önbelleğine dokunmaz (D36).
+ */
+function DangerZone({ services }: { services: BackupServices }) {
+  const [arming, setArming] = useState(false);
+  const [done, setDone] = useState(false);
+
+  return (
+    <div class="card danger">
+      <p class="view__hint">Tüm verileri sil</p>
+      <p class="status">
+        Seanslar, kayıtlar, ölçümler, program sürümleri ve kişisel bilgiler silinir;
+        uygulama ilk açılıştaki gibi (tohum programla) başlar. Geri alınamaz — önce yedek al.
+      </p>
+      {!arming && !done && (
+        <button type="button" class="link danger__link" onClick={() => setArming(true)}>
+          Tüm verileri sil…
+        </button>
+      )}
+      {arming && (
+        <>
+          <p class="warn">Emin misin? Bu cihazdaki tüm antrenman verisi kalıcı olarak silinecek.</p>
+          <div class="exercise__actions">
+            <button type="button" class="btn" onClick={() => setArming(false)}>
+              Vazgeç
+            </button>
+            <button
+              type="button"
+              class="link danger__link"
+              onClick={() => {
+                services.wipeAll();
+                setArming(false);
+                setDone(true);
+              }}
+            >
+              Evet, hepsini sil
+            </button>
+          </div>
+        </>
+      )}
+      {done && <p class="status">Tüm veriler silindi; uygulama ilk açılış durumunda.</p>}
     </div>
   );
 }

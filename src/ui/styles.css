@@ -500,3 +500,13 @@ body {
 .guide__list li {
   margin: 6px 0;
 }
+
+/* ── Tehlikeli bölge (S6, F4.6) ─────────────────────── */
+.danger {
+  border-color: #f2777a;
+}
+
+.danger__link {
+  color: #f2777a;
+  font-weight: 600;
+}

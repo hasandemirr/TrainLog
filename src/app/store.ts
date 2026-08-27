@@ -94,6 +94,16 @@ export function sow(state: AppState, seed: SeedCatalog, deps: { today: ISODate; 
   return openRun(withCatalog, run, deps.today);
 }
 
+/**
+ * "Tüm verileri sil" (F4.6) sonrası TAZE durum — kurulum yolundan farklı bir yol
+ * YOKTUR: boş-geçerli v2 + ekim (sow), yani ilk açılışın aynısı. Silme yalnızca
+ * uygulama VERİSİNE dokunur; SW önbelleğine dokunmaz (D36 — önbellek temizliği
+ * veriye dokunmaz, tersi de geçerli).
+ */
+export function freshState(seed: SeedCatalog, deps: StoreDeps): AppState {
+  return sow(emptyState(deps), seed, deps);
+}
+
 /** Yükle → ek → kalıcılaştır. main.ts bunu çağırıp createStore'a verir. */
 export function initState(storage: StoragePort, seed: SeedCatalog, deps: StoreDeps): AppState {
   const loaded = loadOrInit(storage, deps);

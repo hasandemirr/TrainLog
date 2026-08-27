@@ -49,6 +49,7 @@ export interface BackupServices {
   exportNow: () => ExportResult; // JEST-SENKRON (şart 1) — onClick'ten çağrılır
   exportCsvNow: () => ExportResult; // CSV, yalnız dışa (D28); yedek SAYILMAZ
   restore: (text: string) => ImportResult; // içe al + store.replace
+  wipeAll: () => void; // F4.6 — TEK gerçek ezme; çift onay UI'da, SW önbelleğine dokunmaz
 }
 
 /** Yedeğe yazılacak durum — sayaç SOYULUR (D42 istisnası: yarım sayaç yedekte

@@ -1,7 +1,7 @@
 import { h, render } from 'preact';
 import { App } from './ui/App';
 import { createLocalStorage, requestPersist } from './adapters/storage.local';
-import { createStore, initState } from './app/store';
+import { createStore, freshState, initState } from './app/store';
 import { exportBackup, exportCsv } from './adapters/backup.file';
 import { importBackup, toBackupState } from './app/backup';
 import { buildCsv } from './app/csv';
@@ -37,6 +37,13 @@ const services: BackupServices = {
   },
   // CSV yalnız dışa (D28) — markBackup YOK: CSV yedek değildir, yedek yaşını sıfırlamaz.
   exportCsvNow: () => exportCsv(buildCsv(store.getState()), `trainlog-${todayLocalISO()}.csv`),
+  // F4.6 — çift onaylı tam silme: depo anahtarı temizlenir, sonra ilk açılışın
+  // TAZE durumu yazılır (aynı yol: emptyState + sow). SW önbelleğine DOKUNULMAZ (D36).
+  wipeAll: () => {
+    storage.clear();
+    const at = Date.now();
+    store.replace(freshState(SEED, { now: at, today: todayLocalISO(), deviceId, idgen }));
+  },
   restore: (text) => {
     const res = importBackup(store.getState(), text, SEED, { now: Date.now(), today: todayLocalISO(), idgen });
     if (res.ok) store.replace(res.state);

@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import type { PersistStatus } from '../../app/ports';
 import type { AppState } from '../../domain/types';
 import type { Action, ProfilePatch } from '../../app/actions';
@@ -6,6 +7,7 @@ import { backupStatus } from '../../app/backup';
 import { BackupImport } from '../components/BackupImport';
 import { ExportButton } from '../components/ExportButton';
 import { NumInput } from '../components/NumInput';
+import { Guide } from '../components/Guide';
 
 const PERSIST_TEXT: Record<PersistStatus, string> = {
   unknown: 'Kalıcı depolama: denetleniyor…',
@@ -30,9 +32,12 @@ interface Props {
 }
 
 export function SettingsView({ state, services, persist, dispatch }: Props) {
+  const [guide, setGuide] = useState(false);
   const exerciseCount = Object.keys(state.catalog.exercises).length;
   const recordCount = Object.keys(state.records).length;
   const backup = backupStatus(state, Date.now());
+
+  if (guide) return <Guide onDone={() => setGuide(false)} />;
 
   return (
     <section class="view">
@@ -59,6 +64,13 @@ export function SettingsView({ state, services, persist, dispatch }: Props) {
       </div>
 
       <ProfileSection state={state} dispatch={dispatch} />
+
+      <div class="card">
+        <p class="view__hint">Yardım</p>
+        <button type="button" class="link" onClick={() => setGuide(true)}>
+          Kullanım kılavuzu
+        </button>
+      </div>
 
       <div class="card">
         <p class="view__hint">Tanılama</p>

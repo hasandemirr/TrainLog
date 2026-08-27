@@ -484,3 +484,19 @@ body {
   width: 64px;
   font-size: 1rem;
 }
+
+/* ── Kullanım kılavuzu (S6) ─────────────────────────── */
+.guide__h {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.guide__list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.guide__list li {
+  margin: 6px 0;
+}

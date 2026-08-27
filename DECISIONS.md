@@ -3,7 +3,7 @@
 > **Statü:** Bu dosya projenin otoriter karar kaydıdır. Mimari tartışmalarda numarayla
 > referans verilir. **Claude Code bu dosyayı düzenlemez**; karar değişikliği önerisi
 > `docs/proposals/` altına yazılır, mimar + sahibin onayıyla buraya işlenir.
-> Son güncelleme: 2026-08-14.
+> Son güncelleme: 2026-08-27.
 
 ## A. Platform ve dağıtım
 
@@ -37,6 +37,7 @@ D7 ek (S0 içtihadı): Port imzaları, portu ilk uygulayan sprintte tanımlanır
 18. Kayıt anahtarı `sessionId|slotIdx`; `exId` kaydın özelliğidir. Aynı hareket bir seansta birden çok slotta meşrudur; ikame bu mekanizmayla temsil edilir.
 19. Katalog (hareketler + programlar) durumun içindedir, dolayısıyla yedek/senkron kapsamındadır. Excel'den gelen program yalnızca ilk açılış tohumudur (`content/seed.ts`).
 20. Göç disiplini: `v` alanı zorunlu; saf, test edilmiş `vN→vN+1` zinciri; eski JSON yedekleri içe alınırken aynı zincirden geçer. Prototipin v1 biçimi yalnızca içe alma yolunda tanınır ve dönüştürülür.
+D20 ek (S5-S6 içtihadı): Salt-eklemeli isteğe bağlı alanlar (Run.endedAt, AppState.profile) şema sürümünü artırmaz; validate güncellenir, eski veri geçerli kalır. Kırıcı değişiklikler vN→vN+1 zincirini kullanır.
 21. Güvenilmeyen sınırlarda (içe alma, ileride senkron) elle yazılmış çalışma zamanı doğrulaması; Zod bağımlılığı alınmaz.
 22. Tarihler yerel ISO gün, zaman damgaları epoch ms; virgüllü ondalık girişi kabul edilir; birimler metrik; uygulama dili yalnızca Türkçe, i18n katmanı yok.
 
@@ -80,6 +81,7 @@ D37 ek (S0 içtihadı): ARCHITECTURE §4 ağacı katmanlama için normatiftir, d
 48. Depo: `TrainLog`, GitHub'da public. Adlandırma standardı: kod tanımlayıcıları İngilizce, UI metinleri Türkçe, depo belgeleri Türkçe.
 49. **Gizlilik (public repo):** gerçek antrenman/ölçüm verisi, gerçek yedek dosyaları depoya asla girmez. Gerçek veri yalnızca yerelde `local-data/` altında yaşar (gitignore'da). Depodaki test fixture'ları sentetiktir; tek istisna, kişisel veri içermediği doğrulanmış anonim yapı örnekleridir.
 50. Süreç ve roller: **Sahip** (metha) — push mührü + cihaz kontrol listesi; **Mimar** (ayrı sohbet) — sprint incelemesi, karar onayı; **Geliştirici** (Claude Code) — uygulama; **Tester** (opsiyonel ikinci model) — kapı kontrol listesini bağımsız koşar, diff'e düşman gözüyle bakar. Sprint kapısı altı maddedir (ROADMAP.md); tamamlanmadan sonraki sprint açılmaz.
+D50 ek (S0-S6 içtihatları): Sahibin yazdığı, mimar onaylı DECISIONS metnini açık talimatla verbatim ve ayrı commit olarak işlemek geliştirici yasağının ihlali değildir. Kapı raporlarında "hedeflenen" ile "kanıtlanan" ayrılır; push/mühür beyanları origin'den doğrulanır. Sprint sınırı = oturum sınırı. Mimarın peşin kararları ROADMAP kapsamını netleştirir, daraltmaz.
 
 ## Bilinçli ertelenenler (tetikleri tanımlı)
 
